@@ -2,6 +2,7 @@ package com.oblivi0n_arch.flowwithnoir.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.oblivi0n_arch.flowwithnoir.ui.theme.FlowWithNoirTheme
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(onSessionClick: (name: String, durationSeconds: Int) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -104,13 +105,13 @@ fun HomeScreen() {
             color = MaterialTheme.colorScheme.secondary
         )
         //placeholders
-        SessionItem(name = "Poranny oddech", meta = "5 min · box breathing", isActive = true)
+        SessionItem(name = "Poranny oddech", meta = "5 min · box breathing", durationSeconds = 300, isActive = true, onClick = { onSessionClick("Poranny oddech", 300) })
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-        SessionItem(name = "Uziemienie", meta = "10 min · body scan")
+        SessionItem(name = "Uziemienie", meta = "10 min · body scan", durationSeconds = 600, onClick = { onSessionClick("Uziemienie", 600) })
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-        SessionItem(name = "Przed snem", meta = "8 min · 4-7-8")
+        SessionItem(name = "Przed snem", meta = "8 min · 4-7-8", durationSeconds = 480, onClick = { onSessionClick("Przed snem", 480) })
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-        SessionItem(name = "Życzliwość", meta = "7 min · metta")
+        SessionItem(name = "Życzliwość", meta = "7 min · metta", durationSeconds = 420, onClick = { onSessionClick("Życzliwość", 420) })
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
 
         Spacer(modifier = Modifier.weight(1f))
@@ -129,10 +130,11 @@ fun HomeScreen() {
 }
 
 @Composable
-fun SessionItem(name: String, meta: String, isActive: Boolean = false) {
+fun SessionItem(name: String, meta: String, durationSeconds: Int, isActive: Boolean = false, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .padding(vertical = 15.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -196,6 +198,6 @@ fun NavIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, isActive: Boo
 @Composable
 fun HomeScreenPreview() {
     FlowWithNoirTheme {
-        HomeScreen()
+        HomeScreen(onSessionClick = { _, _ -> })
     }
 }
