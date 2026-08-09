@@ -2,6 +2,7 @@ package com.oblivi0n_arch.flowwithnoir.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -104,6 +105,7 @@ private fun ControlButton(symbol: String, isMain: Boolean = false, onClick: () -
     Box(
         modifier = Modifier
             .size(if (isMain) 60.dp else 44.dp)
+            .clickable(onClick = onClick)
             .background(
                 color = if (isMain) MaterialTheme.colorScheme.onBackground
                 else MaterialTheme.colorScheme.background,
