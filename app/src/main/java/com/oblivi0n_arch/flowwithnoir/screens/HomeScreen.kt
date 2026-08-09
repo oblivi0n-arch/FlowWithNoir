@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.MenuBook
@@ -27,7 +28,8 @@ import com.oblivi0n_arch.flowwithnoir.ui.theme.FlowWithNoirTheme
 @Composable
 fun HomeScreen(
     onSessionClick: (name: String, durationSeconds: Int) -> Unit,
-    onHistoryClick: () -> Unit
+    onHistoryClick: () -> Unit,
+    onProfileClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -144,7 +146,7 @@ fun HomeScreen(
         ) {
             NavIcon(icon = Icons.Filled.SelfImprovement, isActive = true)
             NavIcon(icon = Icons.Filled.MenuBook, isActive = false)
-            NavIcon(icon = Icons.Filled.Insights, isActive = false)
+            NavIcon(icon = Icons.Filled.AccountCircle, isActive = false, onClick = onProfileClick)
         }
     }
 }
@@ -190,10 +192,11 @@ fun SessionItem(name: String, meta: String, durationSeconds: Int, isActive: Bool
 }
 
 @Composable
-fun NavIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, isActive: Boolean) {
+fun NavIcon(icon: ImageVector, isActive: Boolean, onClick: () -> Unit = {}) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = Modifier.clickable(onClick = onClick)
     ) {
         Icon(
             imageVector = icon,
@@ -207,8 +210,8 @@ fun NavIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, isActive: Boo
                 .size(4.dp)
                 .background(
                     color = if (isActive) MaterialTheme.colorScheme.onBackground
-                    else androidx.compose.ui.graphics.Color.Transparent,
-                    shape = androidx.compose.foundation.shape.CircleShape
+                    else Color.Transparent,
+                    shape = CircleShape
                 )
         )
     }
@@ -218,6 +221,6 @@ fun NavIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, isActive: Boo
 @Composable
 fun HomeScreenPreview() {
     FlowWithNoirTheme {
-        HomeScreen(onSessionClick = { _, _ -> }, onHistoryClick = {})
+        HomeScreen(onSessionClick = { _, _ -> }, onHistoryClick = {}, onProfileClick = {})
     }
 }
