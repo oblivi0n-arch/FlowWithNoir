@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.SelfImprovement
@@ -24,7 +25,10 @@ import androidx.compose.ui.unit.dp
 import com.oblivi0n_arch.flowwithnoir.ui.theme.FlowWithNoirTheme
 
 @Composable
-fun HomeScreen(onSessionClick: (name: String, durationSeconds: Int) -> Unit) {
+fun HomeScreen(
+    onSessionClick: (name: String, durationSeconds: Int) -> Unit,
+    onHistoryClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -99,11 +103,27 @@ fun HomeScreen(onSessionClick: (name: String, durationSeconds: Int) -> Unit) {
 
         Spacer(modifier = Modifier.height(26.dp))
 
-        Text(
-            text = "SESJE",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.secondary
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "SESJE",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.secondary
+            )
+            Icon(
+                imageVector = Icons.Filled.Archive,
+                contentDescription = "Historia sesji",
+                tint = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier
+                    .size(16.dp)
+                    .clickable(onClick = onHistoryClick)
+            )
+        }
         //placeholders
         SessionItem(name = "Poranny oddech", meta = "5 min · box breathing", durationSeconds = 300, isActive = true, onClick = { onSessionClick("Poranny oddech", 300) })
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
@@ -198,6 +218,6 @@ fun NavIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, isActive: Boo
 @Composable
 fun HomeScreenPreview() {
     FlowWithNoirTheme {
-        HomeScreen(onSessionClick = { _, _ -> })
+        HomeScreen(onSessionClick = { _, _ -> }, onHistoryClick = {})
     }
 }

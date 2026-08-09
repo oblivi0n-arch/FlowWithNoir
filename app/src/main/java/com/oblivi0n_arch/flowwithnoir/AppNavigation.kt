@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.oblivi0n_arch.flowwithnoir.screens.HistoryScreen
 import com.oblivi0n_arch.flowwithnoir.screens.HomeScreen
 import com.oblivi0n_arch.flowwithnoir.screens.SessionScreen
 import com.oblivi0n_arch.flowwithnoir.screens.SplashScreen
@@ -22,6 +23,7 @@ object Routes {
     const val WELCOME = "welcome"
     const val HOME = "home"
     const val SESSION = "session/{name}/{duration}"
+    const val HISTORY = "history"
 }
 
 @Composable
@@ -64,8 +66,15 @@ fun AppNavigation() {
             HomeScreen(
                 onSessionClick = { name, duration ->
                     navController.navigate("session/$name/$duration")
+                },
+                onHistoryClick = {
+                    navController.navigate(Routes.HISTORY)
                 }
             )
+        }
+
+        composable(Routes.HISTORY) {
+            HistoryScreen()
         }
 
         composable(
