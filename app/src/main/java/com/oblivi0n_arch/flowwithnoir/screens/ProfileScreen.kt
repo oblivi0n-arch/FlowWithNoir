@@ -34,7 +34,8 @@ fun ProfileScreen(
     mostCommonFeeling: Feeling? = null,
     onSettingsClick: () -> Unit = {},
     onNicknameChange: (String) -> Unit = {},
-    onHomeClick: () -> Unit = {}
+    onHomeClick: () -> Unit = {},
+    onJournalListClick: () -> Unit = {}
 ) {
     var showEditDialog by remember { mutableStateOf(false) }
 
@@ -127,7 +128,7 @@ fun ProfileScreen(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             NavIcon(icon = Icons.Filled.SelfImprovement, isActive = false, onClick = onHomeClick)
-            NavIcon(icon = Icons.Filled.MenuBook, isActive = false)
+            NavIcon(icon = Icons.Filled.MenuBook, isActive = false, onClick = onJournalListClick)
             NavIcon(icon = Icons.Filled.AccountCircle, isActive = true)
         }
     }

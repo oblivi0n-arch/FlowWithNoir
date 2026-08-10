@@ -25,6 +25,7 @@ import com.oblivi0n_arch.flowwithnoir.data.JournalRepository
 import com.oblivi0n_arch.flowwithnoir.data.ProfileStats
 import com.oblivi0n_arch.flowwithnoir.screens.HistoryScreen
 import com.oblivi0n_arch.flowwithnoir.screens.HomeScreen
+import com.oblivi0n_arch.flowwithnoir.screens.JournalListScreen
 import com.oblivi0n_arch.flowwithnoir.screens.JournalScreen
 import com.oblivi0n_arch.flowwithnoir.screens.ProfileScreen
 import com.oblivi0n_arch.flowwithnoir.screens.SessionScreen
@@ -41,6 +42,7 @@ object Routes {
     const val SESSION = "session/{name}/{duration}"
     const val JOURNAL = "journal/{name}/{duration}"
     const val JOURNAL_ENTRY = "journal_entry"
+    const val JOURNAL_LIST = "journal_list"
     const val HISTORY = "history"
     const val PROFILE = "profile"
     const val SETTINGS = "settings"
@@ -110,6 +112,9 @@ fun AppNavigation() {
                 onJournalClick = {
                     navController.navigate(Routes.JOURNAL_ENTRY)
                 },
+                onJournalListClick = {
+                    navController.navigate(Routes.JOURNAL_LIST)
+                },
                 streakDays = streakDays,
                 lastEntrySummary = lastEntrySummary,
                 nickname = nickname ?: ""
@@ -119,6 +124,11 @@ fun AppNavigation() {
         composable(Routes.HISTORY) {
             val entries by journalRepository.getEntries().collectAsState(initial = emptyList())
             HistoryScreen(entries = entries)
+        }
+
+        composable(Routes.JOURNAL_LIST) {
+            val entries by journalRepository.getEntries().collectAsState(initial = emptyList())
+            JournalListScreen(entries = entries)
         }
 
         composable(Routes.PROFILE) {
@@ -147,6 +157,9 @@ fun AppNavigation() {
                 },
                 onHomeClick = {
                     navController.popBackStack()
+                },
+                onJournalListClick = {
+                    navController.navigate(Routes.JOURNAL_LIST)
                 }
             )
         }

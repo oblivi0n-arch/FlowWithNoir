@@ -31,6 +31,7 @@ fun HomeScreen(
     onHistoryClick: () -> Unit,
     onProfileClick: () -> Unit,
     onJournalClick: () -> Unit = {},
+    onJournalListClick: () -> Unit = {},
     streakDays: Int = 0,
     lastEntrySummary: String = "Brak wpisów",
     nickname: String = ""
@@ -149,7 +150,7 @@ fun HomeScreen(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             NavIcon(icon = Icons.Filled.SelfImprovement, isActive = true)
-            NavIcon(icon = Icons.Filled.MenuBook, isActive = false)
+            NavIcon(icon = Icons.Filled.MenuBook, isActive = false, onClick = onJournalListClick)
             NavIcon(icon = Icons.Filled.AccountCircle, isActive = false, onClick = onProfileClick)
         }
     }
