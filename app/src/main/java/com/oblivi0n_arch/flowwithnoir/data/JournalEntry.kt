@@ -14,8 +14,10 @@ enum class Feeling(val label: String) {
 data class JournalEntry(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val sessionName: String,
-    val durationSeconds: Int,
+    val plannedDurationSeconds: Int,
+    val actualDurationSeconds: Int,
     val timestampMillis: Long,
-    val feeling: Feeling,
+    val isCompleted: Boolean,
+    val feeling: Feeling?,
     val note: String
 )

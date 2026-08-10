@@ -7,11 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Cloud
-import androidx.compose.material.icons.filled.CloudQueue
-import androidx.compose.material.icons.filled.FilterDrama
-import androidx.compose.material.icons.filled.Thunderstorm
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -20,7 +15,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -32,7 +26,7 @@ import com.oblivi0n_arch.flowwithnoir.ui.theme.FlowWithNoirTheme
 fun JournalScreen(
     sessionName: String,
     onSkip: () -> Unit,
-    onSave: (feeling: Feeling, note: String) -> Unit
+    onSave: (feeling: Feeling?, note: String) -> Unit
 ) {
     var selectedFeeling by remember { mutableStateOf<Feeling?>(null) }
     var note by remember { mutableStateOf("") }
@@ -117,7 +111,7 @@ fun JournalScreen(
 
         Button(
             onClick = {
-                onSave(selectedFeeling ?: Feeling.NEUTRAL, note.trim())
+                onSave(selectedFeeling, note.trim())
             },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(999.dp),
@@ -141,13 +135,6 @@ fun JournalScreen(
                 .padding(8.dp)
         )
     }
-}
-
-private fun feelingIcon(feeling: Feeling): ImageVector = when (feeling) {
-    Feeling.CALM -> Icons.Filled.Cloud
-    Feeling.NEUTRAL -> Icons.Filled.CloudQueue
-    Feeling.STRESSED -> Icons.Filled.Thunderstorm
-    Feeling.TIRED -> Icons.Filled.FilterDrama
 }
 
 @Composable

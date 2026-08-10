@@ -26,7 +26,7 @@ import kotlinx.coroutines.delay
 fun SessionScreen(
     sessionName: String,
     durationSeconds: Int,
-    onClose: () -> Unit,
+    onClose: (elapsedSeconds: Int) -> Unit,
     onFinished: () -> Unit
 ) {
     var secondsLeft by remember { mutableIntStateOf(durationSeconds) }
@@ -107,7 +107,10 @@ fun SessionScreen(
             horizontalArrangement = Arrangement.spacedBy(26.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            ControlButton(symbol = "✕", onClick = onClose)
+            ControlButton(
+                symbol = "✕",
+                onClick = { onClose(durationSeconds - secondsLeft) }
+            )
             ControlButton(
                 symbol = if (isPaused) "▶" else "❚❚",
                 isMain = true,
@@ -157,7 +160,7 @@ fun SessionScreenPreview() {
         SessionScreen(
             sessionName = "Poranny oddech",
             durationSeconds = 300,
-            onClose = {},
+            onClose = { },
             onFinished = {}
         )
     }

@@ -106,7 +106,8 @@ fun AppNavigation() {
         }
 
         composable(Routes.HISTORY) {
-            HistoryScreen()
+            val entries by journalRepository.getEntries().collectAsState(initial = emptyList())
+            HistoryScreen(entries = entries)
         }
 
         composable(Routes.PROFILE) { ProfileScreen() }
@@ -124,7 +125,19 @@ fun AppNavigation() {
             SessionScreen(
                 sessionName = name,
                 durationSeconds = duration,
-                onClose = { navController.popBackStack() },
+                onClose = { elapsedSeconds ->
+                    if (elapsedSeconds >= MIN_INTERRUPTED_SESSION_SECONDS) {
+                        scope.launch {
+                            journalRepository.logSession(
+                                sessionName = name,
+                                plannedDurationSeconds = duration,
+                                actualDurationSeconds = elapsedSeconds,
+                                isCompleted = false
+                            )
+                        }
+                    }
+                    navController.popBackStack()
+                },
                 onFinished = {
                     navController.navigate("journal/$name/$duration") {
                         popUpTo(Routes.HOME)
@@ -146,15 +159,25 @@ fun AppNavigation() {
             JournalScreen(
                 sessionName = name,
                 onSkip = {
-                    navController.navigate(Routes.HOME) {
-                        popUpTo(Routes.HOME) { inclusive = true }
+                    scope.launch {
+                        journalRepository.logSession(
+                            sessionName = name,
+                            plannedDurationSeconds = duration,
+                            actualDurationSeconds = duration,
+                            isCompleted = true
+                        )
+                        navController.navigate(Routes.HOME) {
+                            popUpTo(Routes.HOME) { inclusive = true }
+                        }
                     }
                 },
                 onSave = { feeling, note ->
                     scope.launch {
-                        journalRepository.addEntry(
+                        journalRepository.logSession(
                             sessionName = name,
-                            durationSeconds = duration,
+                            plannedDurationSeconds = duration,
+                            actualDurationSeconds = duration,
+                            isCompleted = true,
                             feeling = feeling,
                             note = note
                         )
@@ -167,3 +190,5 @@ fun AppNavigation() {
         }
     }
 }
+
+private const val MIN_INTERRUPTED_SESSION_SECONDS = 30

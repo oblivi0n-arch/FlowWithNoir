@@ -11,17 +11,21 @@ class JournalRepository(private val dao: JournalDao) {
 
     fun getLatestEntry(): Flow<JournalEntry?> = dao.getLatest()
 
-    suspend fun addEntry(
+    suspend fun logSession(
         sessionName: String,
-        durationSeconds: Int,
-        feeling: Feeling,
-        note: String
+        plannedDurationSeconds: Int,
+        actualDurationSeconds: Int,
+        isCompleted: Boolean,
+        feeling: Feeling? = null,
+        note: String = ""
     ) {
         dao.insert(
             JournalEntry(
                 sessionName = sessionName,
-                durationSeconds = durationSeconds,
+                plannedDurationSeconds = plannedDurationSeconds,
+                actualDurationSeconds = actualDurationSeconds,
                 timestampMillis = System.currentTimeMillis(),
+                isCompleted = isCompleted,
                 feeling = feeling,
                 note = note
             )
@@ -29,7 +33,7 @@ class JournalRepository(private val dao: JournalDao) {
     }
 
     suspend fun getCurrentStreakDays(zone: ZoneId = ZoneId.systemDefault()): Int {
-        val days = dao.getAllTimestamps()
+        val days = dao.getCompletedTimestamps()
             .map { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() }
             .distinct()
             .sortedDescending()
