@@ -36,6 +36,7 @@ object Routes {
     const val HOME = "home"
     const val SESSION = "session/{name}/{duration}"
     const val JOURNAL = "journal/{name}/{duration}"
+    const val JOURNAL_ENTRY = "journal_entry"
     const val HISTORY = "history"
     const val PROFILE = "profile"
 }
@@ -100,6 +101,9 @@ fun AppNavigation() {
                 onProfileClick = {
                     navController.navigate(Routes.PROFILE)
                 },
+                onJournalClick = {
+                    navController.navigate(Routes.JOURNAL_ENTRY)
+                },
                 streakDays = streakDays,
                 lastEntrySummary = lastEntrySummary
             )
@@ -157,7 +161,6 @@ fun AppNavigation() {
             val duration = backStackEntry.arguments?.getInt("duration") ?: 0
 
             JournalScreen(
-                sessionName = name,
                 onSkip = {
                     scope.launch {
                         journalRepository.logSession(
@@ -184,6 +187,28 @@ fun AppNavigation() {
                         navController.navigate(Routes.HOME) {
                             popUpTo(Routes.HOME) { inclusive = true }
                         }
+                    }
+                }
+            )
+        }
+
+        composable(Routes.JOURNAL_ENTRY) {
+            JournalScreen(
+                isStandalone = true,
+                onSkip = {
+                    navController.popBackStack()
+                },
+                onSave = { feeling, note ->
+                    scope.launch {
+                        journalRepository.logSession(
+                            sessionName = "Wpis dziennika",
+                            plannedDurationSeconds = 0,
+                            actualDurationSeconds = 0,
+                            isCompleted = true,
+                            feeling = feeling,
+                            note = note
+                        )
+                        navController.popBackStack()
                     }
                 }
             )

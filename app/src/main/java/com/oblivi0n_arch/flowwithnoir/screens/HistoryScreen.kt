@@ -87,6 +87,9 @@ private fun HistoryItem(entry: JournalEntry) {
 
 private fun historyMeta(entry: JournalEntry): String {
     val date = SimpleDateFormat("d MMM, HH:mm", Locale("pl")).format(Date(entry.timestampMillis))
+    if (entry.plannedDurationSeconds == 0) {
+        return date
+    }
     val duration = formatMinutesSeconds(entry.actualDurationSeconds)
     return if (entry.isCompleted) {
         "$date · $duration"

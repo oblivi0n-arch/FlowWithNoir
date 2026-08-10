@@ -24,7 +24,7 @@ import com.oblivi0n_arch.flowwithnoir.ui.theme.FlowWithNoirTheme
 
 @Composable
 fun JournalScreen(
-    sessionName: String,
+    isStandalone: Boolean = false,
     onSkip: () -> Unit,
     onSave: (feeling: Feeling?, note: String) -> Unit
 ) {
@@ -38,7 +38,7 @@ fun JournalScreen(
             .padding(horizontal = 30.dp, vertical = 60.dp)
     ) {
         Text(
-            text = "Sesja ukończona",
+            text = if (isStandalone) "Nowy wpis" else "Sesja ukończona",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.secondary
         )
@@ -176,6 +176,6 @@ private fun FeelingOption(
 @Composable
 fun JournalScreenPreview() {
     FlowWithNoirTheme {
-        JournalScreen(sessionName = "Poranny oddech", onSkip = {}, onSave = { _, _ -> })
+        JournalScreen(onSkip = {}, onSave = { _, _ -> })
     }
 }

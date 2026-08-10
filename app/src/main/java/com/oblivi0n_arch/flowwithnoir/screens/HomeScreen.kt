@@ -30,6 +30,7 @@ fun HomeScreen(
     onSessionClick: (name: String, durationSeconds: Int) -> Unit,
     onHistoryClick: () -> Unit,
     onProfileClick: () -> Unit,
+    onJournalClick: () -> Unit = {},
     streakDays: Int = 0,
     lastEntrySummary: String = "Brak wpisów"
 ) {
@@ -82,6 +83,7 @@ fun HomeScreen(
                     color = MaterialTheme.colorScheme.outline,
                     shape = RoundedCornerShape(14.dp)
                 )
+                .clickable(onClick = onJournalClick)
                 .padding(vertical = 14.dp, horizontal = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
