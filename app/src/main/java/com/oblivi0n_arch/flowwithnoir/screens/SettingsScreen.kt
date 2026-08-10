@@ -67,6 +67,25 @@ fun SettingsScreen(
                 onClick = { onThemeModeChange(ThemeMode.DARK) }
             )
         }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "v1.0.0",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.secondary
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = "Built by @oblivi0n-arch",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.secondary
+            )
+        }
     }
 }
 
