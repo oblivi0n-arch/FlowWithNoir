@@ -128,7 +128,11 @@ fun AppNavigation() {
 
         composable(Routes.JOURNAL_LIST) {
             val entries by journalRepository.getEntries().collectAsState(initial = emptyList())
-            JournalListScreen(entries = entries)
+            JournalListScreen(
+                entries = entries,
+                onHomeClick = { navController.popBackStack() },
+                onProfileClick = { navController.navigate(Routes.PROFILE) }
+            )
         }
 
         composable(Routes.PROFILE) {

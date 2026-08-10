@@ -13,7 +13,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -46,7 +49,11 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun JournalListScreen(entries: List<JournalEntry>) {
+fun JournalListScreen(
+    entries: List<JournalEntry>,
+    onHomeClick: () -> Unit = {},
+    onProfileClick: () -> Unit = {}
+) {
     var query by remember { mutableStateOf("") }
     var expandedIds by remember { mutableStateOf(setOf<Long>()) }
 
@@ -131,7 +138,12 @@ fun JournalListScreen(entries: List<JournalEntry>) {
         Spacer(modifier = Modifier.height(20.dp))
 
         if (filtered.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
                 Text(
                     text = if (journalEntries.isEmpty()) "Twój dziennik jest pusty" else "Brak wyników",
                     style = MaterialTheme.typography.bodyMedium,
@@ -139,7 +151,11 @@ fun JournalListScreen(entries: List<JournalEntry>) {
                 )
             }
         } else {
-            LazyColumn(modifier = Modifier.nestedScroll(nestedScrollConnection)) {
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .nestedScroll(nestedScrollConnection)
+            ) {
                 grouped.forEach { (date, entriesForDate) ->
                     item {
                         Text(
@@ -166,6 +182,17 @@ fun JournalListScreen(entries: List<JournalEntry>) {
                     }
                 }
             }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp, bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            NavIcon(icon = Icons.Filled.SelfImprovement, isActive = false, onClick = onHomeClick)
+            NavIcon(icon = Icons.Filled.MenuBook, isActive = true)
+            NavIcon(icon = Icons.Filled.AccountCircle, isActive = false, onClick = onProfileClick)
         }
     }
 }
