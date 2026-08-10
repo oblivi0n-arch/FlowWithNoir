@@ -1,9 +1,12 @@
 package com.oblivi0n_arch.flowwithnoir.screens
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,14 +21,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.oblivi0n_arch.flowwithnoir.data.JournalEntry
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.ZoneId
@@ -50,10 +63,50 @@ fun JournalListScreen(entries: List<JournalEntry>) {
         Instant.ofEpochMilli(it.timestampMillis).atZone(ZoneId.systemDefault()).toLocalDate()
     }.toSortedMap(compareByDescending { it })
 
+    val focusManager = LocalFocusManager.current
+    val density = LocalDensity.current
+    val scope = rememberCoroutineScope()
+
+    val maxPullPx = with(density) { 56.dp.toPx() }
+    val pullOffset = remember { Animatable(0f) }
+
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (available.y < 0 && pullOffset.value > 0f) {
+                    val consumed = minOf(-available.y, pullOffset.value)
+                    scope.launch { pullOffset.snapTo(pullOffset.value - consumed) }
+                    return Offset(0f, -consumed)
+                }
+                return Offset.Zero
+            }
+
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource
+            ): Offset {
+                if (available.y > 0f) {
+                    val newValue = (pullOffset.value + available.y).coerceAtMost(maxPullPx)
+                    val used = newValue - pullOffset.value
+                    scope.launch { pullOffset.snapTo(newValue) }
+                    return Offset(0f, used)
+                }
+                return Offset.Zero
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = {
+                    focusManager.clearFocus()
+                    scope.launch { pullOffset.animateTo(0f, tween(200)) }
+                })
+            }
             .padding(horizontal = 26.dp, vertical = 52.dp)
     ) {
         Text(
@@ -62,9 +115,18 @@ fun JournalListScreen(entries: List<JournalEntry>) {
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        SearchBar(query = query, onQueryChange = { query = it })
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(with(density) { pullOffset.value.toDp() })
+                .clipToBounds()
+        ) {
+            if (pullOffset.value > 1f) {
+                SearchBar(query = query, onQueryChange = { query = it })
+            }
+        }
 
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -77,7 +139,7 @@ fun JournalListScreen(entries: List<JournalEntry>) {
                 )
             }
         } else {
-            LazyColumn {
+            LazyColumn(modifier = Modifier.nestedScroll(nestedScrollConnection)) {
                 grouped.forEach { (date, entriesForDate) ->
                     item {
                         Text(
