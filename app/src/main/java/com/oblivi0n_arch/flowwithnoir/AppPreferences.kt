@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.oblivi0n_arch.flowwithnoir.ui.theme.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -15,6 +16,7 @@ class AppPreferences(private val context: Context) {
 
     private val isFirstLaunchKey = booleanPreferencesKey("is_first_launch")
     private val nicknameKey = stringPreferencesKey("nickname")
+    private val themeModeKey = stringPreferencesKey("theme_mode")
 
     suspend fun isFirstLaunch(): Boolean {
         val preferences = context.dataStore.data.first()
@@ -33,6 +35,19 @@ class AppPreferences(private val context: Context) {
     suspend fun setNickname(nickname: String) {
         context.dataStore.edit { preferences ->
             preferences[nicknameKey] = nickname
+        }
+    }
+
+    fun themeModeFlow(): Flow<ThemeMode> =
+        context.dataStore.data.map { preferences ->
+            preferences[themeModeKey]?.let { stored ->
+                runCatching { ThemeMode.valueOf(stored) }.getOrNull()
+            } ?: ThemeMode.SYSTEM
+        }
+
+    suspend fun setThemeMode(themeMode: ThemeMode) {
+        context.dataStore.edit { preferences ->
+            preferences[themeModeKey] = themeMode.name
         }
     }
 }

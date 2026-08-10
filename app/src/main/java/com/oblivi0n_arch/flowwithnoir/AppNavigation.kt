@@ -31,6 +31,7 @@ import com.oblivi0n_arch.flowwithnoir.screens.SessionScreen
 import com.oblivi0n_arch.flowwithnoir.screens.SettingsScreen
 import com.oblivi0n_arch.flowwithnoir.screens.SplashScreen
 import com.oblivi0n_arch.flowwithnoir.screens.WelcomeScreen
+import com.oblivi0n_arch.flowwithnoir.ui.theme.ThemeMode
 import kotlinx.coroutines.launch
 
 object Routes {
@@ -150,7 +151,18 @@ fun AppNavigation() {
             )
         }
 
-        composable(Routes.SETTINGS) { SettingsScreen() }
+        composable(Routes.SETTINGS) {
+            val themeMode by preferences.themeModeFlow().collectAsState(initial = ThemeMode.SYSTEM)
+
+            SettingsScreen(
+                themeMode = themeMode,
+                onThemeModeChange = { newThemeMode ->
+                    scope.launch {
+                        preferences.setThemeMode(newThemeMode)
+                    }
+                }
+            )
+        }
 
         composable(
             route = Routes.SESSION,
