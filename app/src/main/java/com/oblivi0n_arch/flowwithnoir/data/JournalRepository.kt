@@ -5,6 +5,12 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
+data class ProfileStats(
+    val sessionCount: Int,
+    val totalMeditatedMinutes: Int,
+    val mostCommonFeeling: Feeling?
+)
+
 class JournalRepository(private val dao: JournalDao) {
 
     fun getEntries(): Flow<List<JournalEntry>> = dao.getAll()
@@ -53,5 +59,21 @@ class JournalRepository(private val dao: JournalDao) {
             }
         }
         return streak
+    }
+
+    suspend fun getProfileStats(): ProfileStats {
+        val sessionCount = dao.getSessionCount()
+        val totalMinutes = (dao.getTotalMeditatedSeconds() ?: 0) / 60
+        val mostCommonFeeling = dao.getAllFeelings()
+            .groupingBy { it }
+            .eachCount()
+            .maxByOrNull { it.value }
+            ?.key
+
+        return ProfileStats(
+            sessionCount = sessionCount,
+            totalMeditatedMinutes = totalMinutes,
+            mostCommonFeeling = mostCommonFeeling
+        )
     }
 }

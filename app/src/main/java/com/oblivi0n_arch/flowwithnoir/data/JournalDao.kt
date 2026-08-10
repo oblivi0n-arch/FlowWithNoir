@@ -19,4 +19,13 @@ interface JournalDao {
 
     @Query("SELECT timestampMillis FROM journal_entries WHERE isCompleted = 1 AND plannedDurationSeconds > 0 ORDER BY timestampMillis DESC")
     suspend fun getCompletedTimestamps(): List<Long>
+
+    @Query("SELECT COUNT(*) FROM journal_entries WHERE plannedDurationSeconds > 0")
+    suspend fun getSessionCount(): Int
+
+    @Query("SELECT SUM(actualDurationSeconds) FROM journal_entries WHERE plannedDurationSeconds > 0")
+    suspend fun getTotalMeditatedSeconds(): Int?
+
+    @Query("SELECT feeling FROM journal_entries WHERE feeling IS NOT NULL")
+    suspend fun getAllFeelings(): List<Feeling>
 }

@@ -6,6 +6,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -21,11 +22,13 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.oblivi0n_arch.flowwithnoir.data.AppDatabase
 import com.oblivi0n_arch.flowwithnoir.data.JournalRepository
+import com.oblivi0n_arch.flowwithnoir.data.ProfileStats
 import com.oblivi0n_arch.flowwithnoir.screens.HistoryScreen
 import com.oblivi0n_arch.flowwithnoir.screens.HomeScreen
 import com.oblivi0n_arch.flowwithnoir.screens.JournalScreen
 import com.oblivi0n_arch.flowwithnoir.screens.ProfileScreen
 import com.oblivi0n_arch.flowwithnoir.screens.SessionScreen
+import com.oblivi0n_arch.flowwithnoir.screens.SettingsScreen
 import com.oblivi0n_arch.flowwithnoir.screens.SplashScreen
 import com.oblivi0n_arch.flowwithnoir.screens.WelcomeScreen
 import kotlinx.coroutines.launch
@@ -39,6 +42,7 @@ object Routes {
     const val JOURNAL_ENTRY = "journal_entry"
     const val HISTORY = "history"
     const val PROFILE = "profile"
+    const val SETTINGS = "settings"
 }
 
 @Composable
@@ -114,7 +118,37 @@ fun AppNavigation() {
             HistoryScreen(entries = entries)
         }
 
-        composable(Routes.PROFILE) { ProfileScreen() }
+        composable(Routes.PROFILE) {
+            var streakDays by remember { mutableIntStateOf(0) }
+            var stats by remember { mutableStateOf(ProfileStats(0, 0, null)) }
+            val nickname by preferences.nicknameFlow().collectAsState(initial = null)
+
+            LaunchedEffect(Unit) {
+                streakDays = journalRepository.getCurrentStreakDays()
+                stats = journalRepository.getProfileStats()
+            }
+
+            ProfileScreen(
+                nickname = nickname ?: "",
+                streakDays = streakDays,
+                sessionCount = stats.sessionCount,
+                totalMeditatedMinutes = stats.totalMeditatedMinutes,
+                mostCommonFeeling = stats.mostCommonFeeling,
+                onSettingsClick = {
+                    navController.navigate(Routes.SETTINGS)
+                },
+                onNicknameChange = { newNickname ->
+                    scope.launch {
+                        preferences.setNickname(newNickname)
+                    }
+                },
+                onHomeClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Routes.SETTINGS) { SettingsScreen() }
 
         composable(
             route = Routes.SESSION,
