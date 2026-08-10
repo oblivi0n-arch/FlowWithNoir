@@ -130,7 +130,11 @@ fun AppNavigation() {
             val entries by journalRepository.getEntries().collectAsState(initial = emptyList())
             JournalListScreen(
                 entries = entries,
-                onHomeClick = { navController.popBackStack() },
+                onHomeClick = {
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.HOME) { inclusive = true }
+                    }
+                },
                 onProfileClick = { navController.navigate(Routes.PROFILE) }
             )
         }
@@ -160,7 +164,9 @@ fun AppNavigation() {
                     }
                 },
                 onHomeClick = {
-                    navController.popBackStack()
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.HOME) { inclusive = true }
+                    }
                 },
                 onJournalListClick = {
                     navController.navigate(Routes.JOURNAL_LIST)
