@@ -86,6 +86,7 @@ fun AppNavigation() {
             var streakDays by remember { mutableIntStateOf(0) }
             val latestEntry by journalRepository.getLatestEntry()
                 .collectAsState(initial = null)
+            val nickname by preferences.nicknameFlow().collectAsState(initial = null)
 
             LaunchedEffect(latestEntry) {
                 streakDays = journalRepository.getCurrentStreakDays()
@@ -109,7 +110,8 @@ fun AppNavigation() {
                     navController.navigate(Routes.JOURNAL_ENTRY)
                 },
                 streakDays = streakDays,
-                lastEntrySummary = lastEntrySummary
+                lastEntrySummary = lastEntrySummary,
+                nickname = nickname ?: ""
             )
         }
 

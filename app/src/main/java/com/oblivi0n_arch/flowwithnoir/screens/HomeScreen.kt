@@ -32,7 +32,8 @@ fun HomeScreen(
     onProfileClick: () -> Unit,
     onJournalClick: () -> Unit = {},
     streakDays: Int = 0,
-    lastEntrySummary: String = "Brak wpisów"
+    lastEntrySummary: String = "Brak wpisów",
+    nickname: String = ""
 ) {
     Column(
         modifier = Modifier
@@ -41,9 +42,8 @@ fun HomeScreen(
             .padding(horizontal = 26.dp, vertical = 52.dp)
     ) {
         Text(
-            text = "Dzień dobry, użytkowniku",
-            //TODO: make a small library with 10 different texts which are randomized depending on
-            // a date. Also add the display for user's real name
+            text = if (nickname.isBlank()) "Dzień dobry" else "Dzień dobry, $nickname",
+            //TODO: make a small library with 10 different texts which are randomized depending on a date
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.secondary
         )
