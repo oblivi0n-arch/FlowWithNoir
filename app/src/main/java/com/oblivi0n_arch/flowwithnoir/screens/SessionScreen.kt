@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.oblivi0n_arch.flowwithnoir.BuildConfig
 import com.oblivi0n_arch.flowwithnoir.ui.theme.FlowWithNoirTheme
 import kotlinx.coroutines.delay
 
@@ -54,11 +55,28 @@ fun SessionScreen(
             .padding(horizontal = 30.dp, vertical = 70.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = sessionName,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = sessionName,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
+            if (BuildConfig.DEBUG) {
+                Text(
+                    text = "⏩ SKIP",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.clickable {
+                        secondsLeft = secondsLeft.coerceAtMost(2)
+                    }
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.weight(1f))
 
@@ -95,7 +113,7 @@ fun SessionScreen(
                 isMain = true,
                 onClick = { isPaused = !isPaused }
             )
-            ControlButton(symbol = "♪", onClick = { /* TODO: no-op, app is soundless */ })
+            ControlButton(symbol = "♪", onClick = { })
         }
     }
 }

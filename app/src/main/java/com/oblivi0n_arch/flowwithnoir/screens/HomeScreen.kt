@@ -29,7 +29,9 @@ import com.oblivi0n_arch.flowwithnoir.ui.theme.FlowWithNoirTheme
 fun HomeScreen(
     onSessionClick: (name: String, durationSeconds: Int) -> Unit,
     onHistoryClick: () -> Unit,
-    onProfileClick: () -> Unit
+    onProfileClick: () -> Unit,
+    streakDays: Int = 0,
+    lastEntrySummary: String = "Brak wpisów"
 ) {
     Column(
         modifier = Modifier
@@ -58,7 +60,7 @@ fun HomeScreen(
             verticalAlignment = Alignment.Bottom
         ) {
             Text(
-                text = "12", //TODO: change placeholder for real reference
+                text = "$streakDays",
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.onBackground
             )
@@ -91,7 +93,7 @@ fun HomeScreen(
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
-                    text = "Ostatni wpis: wczoraj",
+                    text = lastEntrySummary,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.secondary
                 )
