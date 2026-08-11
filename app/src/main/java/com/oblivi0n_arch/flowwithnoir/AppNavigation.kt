@@ -25,7 +25,9 @@ import com.oblivi0n_arch.flowwithnoir.data.ProfileStats
 import com.oblivi0n_arch.flowwithnoir.data.SessionCatalog
 import com.oblivi0n_arch.flowwithnoir.screens.HistoryScreen
 import com.oblivi0n_arch.flowwithnoir.screens.HomeScreen
+import com.oblivi0n_arch.flowwithnoir.screens.JournalEntryScreen
 import com.oblivi0n_arch.flowwithnoir.screens.JournalListScreen
+import com.oblivi0n_arch.flowwithnoir.screens.JournalMode
 import com.oblivi0n_arch.flowwithnoir.screens.JournalScreen
 import com.oblivi0n_arch.flowwithnoir.screens.ProfileScreen
 import com.oblivi0n_arch.flowwithnoir.screens.SessionCatalogScreen
@@ -45,6 +47,8 @@ object Routes {
     const val JOURNAL = "journal/{templateId}/{duration}"
     const val JOURNAL_ENTRY = "journal_entry"
     const val JOURNAL_LIST = "journal_list"
+    const val JOURNAL_DETAIL = "journal_detail/{entryId}"
+    const val JOURNAL_EDIT = "journal_edit/{entryId}"
     const val HISTORY = "history"
     const val PROFILE = "profile"
     const val SETTINGS = "settings"
@@ -52,6 +56,10 @@ object Routes {
     fun session(templateId: String, durationSeconds: Int) = "session/$templateId/$durationSeconds"
 
     fun journal(templateId: String, durationSeconds: Int) = "journal/$templateId/$durationSeconds"
+
+    fun journalDetail(entryId: Long) = "journal_detail/$entryId"
+
+    fun journalEdit(entryId: Long) = "journal_edit/$entryId"
 }
 
 @Composable
@@ -153,7 +161,9 @@ fun AppNavigation() {
                         popUpTo(Routes.HOME) { inclusive = true }
                     }
                 },
-                onProfileClick = { navController.navigate(Routes.PROFILE) }
+                onProfileClick = { navController.navigate(Routes.PROFILE) },
+                onEntryClick = { entryId -> navController.navigate(Routes.journalDetail(entryId)) },
+                onNewEntryClick = { navController.navigate(Routes.JOURNAL_ENTRY) }
             )
         }
 
@@ -256,6 +266,7 @@ fun AppNavigation() {
             val name = SessionCatalog.byId(templateId)?.name ?: "Sesja"
 
             JournalScreen(
+                mode = JournalMode.AFTER_SESSION,
                 onSkip = {
                     scope.launch {
                         journalRepository.logSession(
@@ -269,7 +280,7 @@ fun AppNavigation() {
                         }
                     }
                 },
-                onSave = { feeling, note ->
+                onSave = { feeling, note, tags ->
                     scope.launch {
                         journalRepository.logSession(
                             sessionName = name,
@@ -277,7 +288,8 @@ fun AppNavigation() {
                             actualDurationSeconds = duration,
                             isCompleted = true,
                             feeling = feeling,
-                            note = note
+                            note = note,
+                            tags = tags
                         )
                         navController.navigate(Routes.HOME) {
                             popUpTo(Routes.HOME) { inclusive = true }
@@ -289,11 +301,11 @@ fun AppNavigation() {
 
         composable(Routes.JOURNAL_ENTRY) {
             JournalScreen(
-                isStandalone = true,
+                mode = JournalMode.NEW,
                 onSkip = {
                     navController.popBackStack()
                 },
-                onSave = { feeling, note ->
+                onSave = { feeling, note, tags ->
                     scope.launch {
                         journalRepository.logSession(
                             sessionName = "Wpis dziennika",
@@ -301,12 +313,59 @@ fun AppNavigation() {
                             actualDurationSeconds = 0,
                             isCompleted = true,
                             feeling = feeling,
-                            note = note
+                            note = note,
+                            tags = tags
                         )
                         navController.popBackStack()
                     }
                 }
             )
+        }
+
+        composable(
+            route = Routes.JOURNAL_DETAIL,
+            arguments = listOf(navArgument("entryId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val entryId = backStackEntry.arguments?.getLong("entryId") ?: 0L
+            val entry by journalRepository.getEntry(entryId).collectAsState(initial = null)
+
+            JournalEntryScreen(
+                entry = entry,
+                onBack = { navController.popBackStack() },
+                onEdit = { navController.navigate(Routes.journalEdit(entryId)) },
+                onDelete = {
+                    entry?.let { current ->
+                        scope.launch {
+                            journalRepository.deleteEntry(current)
+                            navController.popBackStack()
+                        }
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = Routes.JOURNAL_EDIT,
+            arguments = listOf(navArgument("entryId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val entryId = backStackEntry.arguments?.getLong("entryId") ?: 0L
+            val entry by journalRepository.getEntry(entryId).collectAsState(initial = null)
+
+            entry?.let { current ->
+                JournalScreen(
+                    mode = JournalMode.EDIT,
+                    initialFeeling = current.feeling,
+                    initialNote = current.note,
+                    initialTags = current.tags,
+                    onSkip = { navController.popBackStack() },
+                    onSave = { feeling, note, tags ->
+                        scope.launch {
+                            journalRepository.updateEntry(current, feeling, note, tags)
+                            navController.popBackStack()
+                        }
+                    }
+                )
+            }
         }
     }
 }

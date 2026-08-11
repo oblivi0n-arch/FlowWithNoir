@@ -2,6 +2,7 @@ package com.oblivi0n_arch.flowwithnoir.data
 
 import kotlinx.coroutines.flow.Flow
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
@@ -15,6 +16,8 @@ class JournalRepository(private val dao: JournalDao) {
 
     fun getEntries(): Flow<List<JournalEntry>> = dao.getAll()
 
+    fun getEntry(id: Long): Flow<JournalEntry?> = dao.getById(id)
+
     fun getLatestEntry(): Flow<JournalEntry?> = dao.getLatest()
 
     suspend fun logSession(
@@ -23,7 +26,8 @@ class JournalRepository(private val dao: JournalDao) {
         actualDurationSeconds: Int,
         isCompleted: Boolean,
         feeling: Feeling? = null,
-        note: String = ""
+        note: String = "",
+        tags: List<JournalTag> = emptyList()
     ) {
         dao.insert(
             JournalEntry(
@@ -33,9 +37,27 @@ class JournalRepository(private val dao: JournalDao) {
                 timestampMillis = System.currentTimeMillis(),
                 isCompleted = isCompleted,
                 feeling = feeling,
-                note = note
+                note = note,
+                tags = tags
             )
         )
+    }
+
+    suspend fun updateEntry(
+        entry: JournalEntry,
+        feeling: Feeling?,
+        note: String,
+        tags: List<JournalTag>
+    ) {
+        dao.update(entry.copy(feeling = feeling, note = note, tags = tags))
+    }
+
+    suspend fun deleteEntry(entry: JournalEntry) {
+        dao.delete(entry)
+    }
+
+    suspend fun deleteAll() {
+        dao.deleteAll()
     }
 
     suspend fun getCurrentStreakDays(zone: ZoneId = ZoneId.systemDefault()): Int {
@@ -76,4 +98,34 @@ class JournalRepository(private val dao: JournalDao) {
             mostCommonFeeling = mostCommonFeeling
         )
     }
+}
+
+fun List<JournalEntry>.journalOnly(): List<JournalEntry> = filter { it.isJournalEntry }
+
+fun List<JournalEntry>.daysWithEntries(
+    days: Int,
+    today: LocalDate = LocalDate.now(),
+    zone: ZoneId = ZoneId.systemDefault()
+): List<LocalDate> {
+    val start = today.minusDays((days - 1).toLong())
+    val present = journalOnly()
+        .map { Instant.ofEpochMilli(it.timestampMillis).atZone(zone).toLocalDate() }
+        .toSet()
+    return (0 until days).map { start.plusDays(it.toLong()) }.filter { it in present }
+}
+
+fun List<JournalEntry>.feelingCounts(
+    days: Int,
+    today: LocalDate = LocalDate.now(),
+    zone: ZoneId = ZoneId.systemDefault()
+): Map<Feeling, Int> {
+    val start = today.minusDays((days - 1).toLong())
+    return journalOnly()
+        .filter {
+            val date = Instant.ofEpochMilli(it.timestampMillis).atZone(zone).toLocalDate()
+            !date.isBefore(start) && !date.isAfter(today)
+        }
+        .mapNotNull { it.feeling }
+        .groupingBy { it }
+        .eachCount()
 }
