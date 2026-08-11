@@ -3,7 +3,6 @@ package com.oblivi0n_arch.flowwithnoir.screens
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -109,7 +108,14 @@ fun SessionScreen(
                 if (currentPhase != phase) {
                     phase = currentPhase
                 }
-                circleScale.floatValue = scaleFor(currentPhase, progress, hasTopUp)
+                circleScale.floatValue = breathScale(
+                    phase = currentPhase,
+                    progress = progress,
+                    hasTopUp = hasTopUp,
+                    minScale = CIRCLE_MIN_SCALE,
+                    maxScale = CIRCLE_MAX_SCALE,
+                    topUpScale = CIRCLE_TOP_UP_SCALE
+                )
                 topUpProgress.floatValue =
                     if (currentPhase == BreathPhase.INHALE_TOP) progress else 0f
                 ringProgress.floatValue =
@@ -431,27 +437,6 @@ private fun ControlButton(
                 .size(if (isMain) 24.dp else 18.dp)
                 .alpha(if (isDimmed) 0.35f else 1f)
         )
-    }
-}
-
-private fun scaleFor(phase: BreathPhase, progress: Float, hasTopUp: Boolean): Float {
-    val clamped = progress.coerceIn(0f, 1f)
-    val peak = if (hasTopUp) CIRCLE_TOP_UP_SCALE else CIRCLE_MAX_SCALE
-    return when (phase) {
-        BreathPhase.INHALE -> {
-            val eased = FastOutSlowInEasing.transform(clamped)
-            CIRCLE_MIN_SCALE + (CIRCLE_MAX_SCALE - CIRCLE_MIN_SCALE) * eased
-        }
-        BreathPhase.INHALE_TOP -> {
-            val eased = LinearOutSlowInEasing.transform(clamped)
-            CIRCLE_MAX_SCALE + (CIRCLE_TOP_UP_SCALE - CIRCLE_MAX_SCALE) * eased
-        }
-        BreathPhase.HOLD_IN -> peak
-        BreathPhase.EXHALE -> {
-            val eased = FastOutSlowInEasing.transform(clamped)
-            peak - (peak - CIRCLE_MIN_SCALE) * eased
-        }
-        BreathPhase.HOLD_OUT -> CIRCLE_MIN_SCALE
     }
 }
 

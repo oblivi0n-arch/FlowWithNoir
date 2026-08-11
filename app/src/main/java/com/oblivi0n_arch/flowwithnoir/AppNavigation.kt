@@ -1,5 +1,10 @@
 package com.oblivi0n_arch.flowwithnoir
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -23,6 +28,7 @@ import com.oblivi0n_arch.flowwithnoir.data.AppDatabase
 import com.oblivi0n_arch.flowwithnoir.data.JournalRepository
 import com.oblivi0n_arch.flowwithnoir.data.ProfileStats
 import com.oblivi0n_arch.flowwithnoir.data.SessionCatalog
+import com.oblivi0n_arch.flowwithnoir.data.WeekDayState
 import com.oblivi0n_arch.flowwithnoir.reminder.ReminderScheduler
 import com.oblivi0n_arch.flowwithnoir.screens.HistoryScreen
 import com.oblivi0n_arch.flowwithnoir.screens.HomeScreen
@@ -78,7 +84,20 @@ fun AppNavigation() {
         }
     }
 
-    NavHost(navController = navController, startDestination = Routes.SPLASH) {
+    NavHost(
+        navController = navController,
+        startDestination = Routes.SPLASH,
+        enterTransition = {
+            fadeIn(tween(TRANSITION_IN_MILLIS)) +
+                slideInVertically(tween(TRANSITION_IN_MILLIS)) { height -> height / 14 }
+        },
+        exitTransition = { fadeOut(tween(TRANSITION_OUT_MILLIS)) },
+        popEnterTransition = { fadeIn(tween(TRANSITION_IN_MILLIS)) },
+        popExitTransition = {
+            fadeOut(tween(TRANSITION_OUT_MILLIS)) +
+                slideOutVertically(tween(TRANSITION_IN_MILLIS)) { height -> height / 14 }
+        }
+    ) {
 
         composable(Routes.SPLASH) {
             SplashScreen(
@@ -109,12 +128,19 @@ fun AppNavigation() {
 
         composable(Routes.HOME) {
             var streakDays by remember { mutableIntStateOf(0) }
+            var weekDays by remember { mutableStateOf(emptyList<WeekDayState>()) }
             val latestEntry by journalRepository.getLatestEntry()
                 .collectAsState(initial = null)
             val nickname by preferences.nicknameFlow().collectAsState(initial = null)
+            val playIntro = remember {
+                val isFirstVisit = !IntroState.hasPlayed
+                IntroState.hasPlayed = true
+                isFirstVisit
+            }
 
             LaunchedEffect(latestEntry) {
                 streakDays = journalRepository.getCurrentStreakDays()
+                weekDays = journalRepository.getCurrentWeekDays()
             }
 
             val lastEntrySummary = latestEntry?.let {
@@ -141,8 +167,10 @@ fun AppNavigation() {
                     navController.navigate(Routes.JOURNAL_LIST)
                 },
                 streakDays = streakDays,
+                weekDays = weekDays,
                 lastEntrySummary = lastEntrySummary,
-                nickname = nickname ?: ""
+                nickname = nickname ?: "",
+                playIntro = playIntro
             )
         }
 
@@ -427,3 +455,9 @@ fun AppNavigation() {
 }
 
 private const val MIN_INTERRUPTED_SESSION_SECONDS = 30
+private const val TRANSITION_IN_MILLIS = 300
+private const val TRANSITION_OUT_MILLIS = 200
+
+private object IntroState {
+    var hasPlayed = false
+}

@@ -1,10 +1,18 @@
 package com.oblivi0n_arch.flowwithnoir.data
 
 import kotlinx.coroutines.flow.Flow
+import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
+
+enum class WeekDayState {
+    DONE,
+    TODAY,
+    MISSED,
+    FUTURE
+}
 
 data class ProfileStats(
     val sessionCount: Int,
@@ -84,6 +92,24 @@ class JournalRepository(private val dao: JournalDao) {
             }
         }
         return streak
+    }
+
+    suspend fun getCurrentWeekDays(zone: ZoneId = ZoneId.systemDefault()): List<WeekDayState> {
+        val today = LocalDate.now(zone)
+        val monday = today.with(DayOfWeek.MONDAY)
+        val sessionDays = dao.getCompletedTimestamps()
+            .map { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() }
+            .toSet()
+
+        return (0..6).map { offset ->
+            val day = monday.plusDays(offset.toLong())
+            when {
+                day in sessionDays -> WeekDayState.DONE
+                day == today -> WeekDayState.TODAY
+                day.isAfter(today) -> WeekDayState.FUTURE
+                else -> WeekDayState.MISSED
+            }
+        }
     }
 
     suspend fun getProfileStats(): ProfileStats {

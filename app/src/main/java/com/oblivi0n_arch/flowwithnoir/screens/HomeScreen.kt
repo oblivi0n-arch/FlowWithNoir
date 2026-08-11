@@ -1,12 +1,11 @@
 package com.oblivi0n_arch.flowwithnoir.screens
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -25,10 +24,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.oblivi0n_arch.flowwithnoir.data.SessionCatalog
 import com.oblivi0n_arch.flowwithnoir.data.SessionTemplate
+import com.oblivi0n_arch.flowwithnoir.data.WeekDayState
 import com.oblivi0n_arch.flowwithnoir.ui.theme.FlowWithNoirTheme
 import java.time.LocalDate
 import java.time.LocalTime
@@ -43,8 +45,10 @@ fun HomeScreen(
     onJournalListClick: () -> Unit = {},
     onAllSessionsClick: () -> Unit = {},
     streakDays: Int = 0,
+    weekDays: List<WeekDayState> = emptyList(),
     lastEntrySummary: String = "Brak wpisów",
-    nickname: String = ""
+    nickname: String = "",
+    playIntro: Boolean = false
 ) {
     val now = remember { LocalTime.now() }
     val featured = remember { SessionCatalog.featured(now) }
@@ -69,22 +73,29 @@ fun HomeScreen(
             Text(
                 text = if (nickname.isBlank()) greeting else "$greeting, $nickname",
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.secondary
+                color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.staggeredReveal(0, playIntro)
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = "Co dziś wybierzesz?",
                 style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.onBackground
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.staggeredReveal(1, playIntro)
             )
 
-            StreakRow(streakDays = streakDays)
+            StreakRow(
+                streakDays = streakDays,
+                weekDays = weekDays,
+                modifier = Modifier.staggeredReveal(2, playIntro)
+            )
 
             Spacer(modifier = Modifier.height(4.dp))
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .staggeredReveal(3, playIntro)
                     .border(
                         width = 1.dp,
                         color = MaterialTheme.colorScheme.outline,
@@ -119,6 +130,7 @@ fun HomeScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .staggeredReveal(4, playIntro)
                     .padding(vertical = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -142,7 +154,8 @@ fun HomeScreen(
                 SessionItem(
                     template = template,
                     isSuggested = template.id == suggested.id,
-                    onClick = { sheetTemplate = template }
+                    onClick = { sheetTemplate = template },
+                    modifier = Modifier.staggeredReveal(5 + index, playIntro)
                 )
                 if (index < featured.lastIndex) {
                     HorizontalDivider(color = MaterialTheme.colorScheme.outline)
@@ -154,6 +167,7 @@ fun HomeScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .staggeredReveal(5 + featured.size, playIntro)
                     .clickable(onClick = onAllSessionsClick)
                     .padding(vertical = 15.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -175,7 +189,8 @@ fun HomeScreen(
         BottomNavBar(
             selected = NavTab.SESSIONS,
             onJournalClick = onJournalListClick,
-            onProfileClick = onProfileClick
+            onProfileClick = onProfileClick,
+            modifier = Modifier.staggeredReveal(6 + featured.size, playIntro)
         )
     }
 
@@ -193,31 +208,78 @@ fun HomeScreen(
 }
 
 @Composable
-private fun StreakRow(streakDays: Int) {
-    val alpha by animateFloatAsState(
-        targetValue = if (streakDays > 0) 1f else 0.55f,
-        animationSpec = tween(400),
-        label = "streakAlpha"
-    )
-
+private fun StreakRow(
+    streakDays: Int,
+    weekDays: List<WeekDayState>,
+    modifier: Modifier = Modifier
+) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .padding(top = 20.dp, bottom = 18.dp)
-            .alpha(alpha),
-        verticalAlignment = Alignment.Bottom
+            .padding(top = 20.dp, bottom = 18.dp),
+        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(
-            text = "$streakDays",
-            style = MaterialTheme.typography.headlineLarge,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = if (streakDays == 1) "dzień z rzędu\nbez przerwy" else "dni z rzędu\nbez przerwy",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.secondary
-        )
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                text = "$streakDays",
+                style = MaterialTheme.typography.headlineLarge,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = if (streakDays == 1) "dzień z rzędu\nbez przerwy" else "dni z rzędu\nbez przerwy",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.secondary
+            )
+        }
+
+        if (weekDays.size == WEEK_LABELS.size) {
+            WeekStrip(weekDays)
+        }
+    }
+}
+
+private val WEEK_LABELS = listOf("P", "W", "Ś", "C", "P", "S", "N")
+
+@Composable
+private fun WeekStrip(weekDays: List<WeekDayState>) {
+    Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+        weekDays.forEachIndexed { index, state ->
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(5.dp),
+                modifier = Modifier.alpha(if (state == WeekDayState.FUTURE) 0.35f else 1f)
+            ) {
+                Text(
+                    text = WEEK_LABELS[index],
+                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.sp),
+                    color = if (state == WeekDayState.TODAY) MaterialTheme.colorScheme.onBackground
+                    else MaterialTheme.colorScheme.secondary
+                )
+                Box(
+                    modifier = Modifier
+                        .size(7.dp)
+                        .background(
+                            color = if (state == WeekDayState.DONE) {
+                                MaterialTheme.colorScheme.onBackground
+                            } else {
+                                Color.Transparent
+                            },
+                            shape = CircleShape
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = if (state == WeekDayState.TODAY) {
+                                MaterialTheme.colorScheme.onBackground
+                            } else {
+                                MaterialTheme.colorScheme.outline
+                            },
+                            shape = CircleShape
+                        )
+                )
+            }
+        }
     }
 }
 
@@ -225,10 +287,11 @@ private fun StreakRow(streakDays: Int) {
 fun SessionItem(
     template: SessionTemplate,
     isSuggested: Boolean = false,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(vertical = 15.dp),
@@ -247,7 +310,11 @@ fun SessionItem(
                 color = MaterialTheme.colorScheme.secondary
             )
         }
-        StatusDot(isActive = isSuggested)
+        if (isSuggested) {
+            BreathingDot(pattern = template.pattern)
+        } else {
+            StatusDot(isActive = false)
+        }
     }
 }
 
