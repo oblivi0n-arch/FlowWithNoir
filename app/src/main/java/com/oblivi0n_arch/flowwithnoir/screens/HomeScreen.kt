@@ -194,7 +194,6 @@ fun HomeScreen(
 
 @Composable
 private fun StreakRow(streakDays: Int) {
-    // Licznik pojawia się miękko, żeby nie migał przy odczycie z bazy.
     val alpha by animateFloatAsState(
         targetValue = if (streakDays > 0) 1f else 0.55f,
         animationSpec = tween(400),
@@ -280,9 +279,6 @@ private val nightGreetings = listOf(
     "Odpocznij"
 )
 
-/**
- * Powitanie zależne od pory dnia, stabilne w obrębie jednego dnia.
- */
 internal fun greetingFor(time: LocalTime, date: LocalDate): String {
     val pool = when (time.hour) {
         in 5..11 -> morningGreetings

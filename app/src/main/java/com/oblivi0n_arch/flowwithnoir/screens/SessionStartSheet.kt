@@ -39,9 +39,6 @@ import androidx.compose.ui.unit.dp
 import com.oblivi0n_arch.flowwithnoir.data.SessionCatalog
 import com.oblivi0n_arch.flowwithnoir.data.SessionTemplate
 
-/**
- * Arkusz z opisem sesji i wyborem długości. Wywoływany z ekranu głównego i z katalogu.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionStartSheet(
@@ -226,7 +223,6 @@ private fun DurationChip(label: String, isSelected: Boolean, onClick: () -> Unit
     }
 }
 
-/** Mała kropka statusu używana na listach sesji. */
 @Composable
 fun StatusDot(isActive: Boolean, modifier: Modifier = Modifier) {
     Box(

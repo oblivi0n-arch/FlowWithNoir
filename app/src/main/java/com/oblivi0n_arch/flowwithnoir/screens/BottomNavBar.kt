@@ -30,21 +30,12 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 
-/**
- * Zakładki dolnej nawigacji. Ekrany bez paska (sesja, ustawienia, historia,
- * katalog) świadomie go nie pokazują.
- */
 enum class NavTab {
     SESSIONS,
     JOURNAL,
     PROFILE
 }
 
-/**
- * Wspólny pasek nawigacji o stałej geometrii — trzymany w jednym miejscu, żeby
- * wysokość nie rozjeżdżała się między ekranami. Zakłada, że rodzic używa
- * [screenPaddingTop] / [screenPaddingBottom] jako paddingu ekranu.
- */
 @Composable
 fun BottomNavBar(
     selected: NavTab,
@@ -77,13 +68,10 @@ fun BottomNavBar(
     }
 }
 
-/** Padding górny ekranów z dolną nawigacją. */
 val screenPaddingTop = 52.dp
 
-/** Padding dolny ekranów z dolną nawigacją. */
 val screenPaddingBottom = 20.dp
 
-/** Padding poziomy ekranów z dolną nawigacją. */
 val screenPaddingHorizontal = 26.dp
 
 @Composable

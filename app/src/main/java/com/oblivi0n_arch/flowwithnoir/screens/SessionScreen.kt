@@ -3,6 +3,7 @@ package com.oblivi0n_arch.flowwithnoir.screens
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -60,7 +61,12 @@ import kotlin.math.sin
 
 private const val CIRCLE_MIN_SCALE = 0.58f
 private const val CIRCLE_MAX_SCALE = 1f
+private const val CIRCLE_TOP_UP_SCALE = 1.48f
 private const val FINISH_ANIMATION_MILLIS = 1100L
+
+private val stageSize = 300.dp
+private val ringSize = 260.dp
+private val breathCircleSize = 190.dp
 
 @Composable
 fun SessionScreen(
@@ -70,14 +76,16 @@ fun SessionScreen(
     onFinished: () -> Unit
 ) {
     val totalMillis = durationSeconds * 1000L
+    val hasTopUp = template.pattern.hasTopUp
+
     var elapsedMillis by remember { mutableLongStateOf(0L) }
     var isPaused by remember { mutableStateOf(false) }
     var isFinishing by remember { mutableStateOf(false) }
     var hapticsEnabled by remember { mutableStateOf(true) }
 
-    // Skala okręgu liczona poza kompozycją, żeby animacja nie wymuszała rekompozycji co klatkę.
     val circleScale = remember { mutableFloatStateOf(CIRCLE_MIN_SCALE) }
     val ringProgress = remember { mutableFloatStateOf(0f) }
+    val topUpProgress = remember { mutableFloatStateOf(0f) }
 
     var phase by remember { mutableStateOf(BreathPhase.INHALE) }
     val haptics = LocalHapticFeedback.current
@@ -101,7 +109,9 @@ fun SessionScreen(
                 if (currentPhase != phase) {
                     phase = currentPhase
                 }
-                circleScale.floatValue = scaleFor(currentPhase, progress)
+                circleScale.floatValue = scaleFor(currentPhase, progress, hasTopUp)
+                topUpProgress.floatValue =
+                    if (currentPhase == BreathPhase.INHALE_TOP) progress else 0f
                 ringProgress.floatValue =
                     if (totalMillis == 0L) 0f else elapsedMillis.toFloat() / totalMillis.toFloat()
             }
@@ -109,10 +119,14 @@ fun SessionScreen(
         isFinishing = true
     }
 
-    // Delikatna wibracja na zmianę fazy pomaga trzymać rytm bez patrzenia na ekran.
     LaunchedEffect(phase, hapticsEnabled) {
         if (hapticsEnabled && !isFinishing && elapsedMillis > 0) {
-            haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            val effect = if (phase == BreathPhase.INHALE_TOP) {
+                HapticFeedbackType.LongPress
+            } else {
+                HapticFeedbackType.TextHandleMove
+            }
+            haptics.performHapticFeedback(effect)
         }
     }
 
@@ -181,6 +195,7 @@ fun SessionScreen(
             BreathingCircle(
                 scaleProvider = { circleScale.floatValue },
                 progressProvider = { ringProgress.floatValue },
+                topUpProvider = { topUpProgress.floatValue },
                 isPaused = isPaused,
                 phase = phase,
                 modifier = Modifier.alpha(pausedDim)
@@ -224,13 +239,11 @@ fun SessionScreen(
     }
 }
 
-/**
- * Okrąg pulsujący w rytm oddechu: pierścień postępu sesji, wypełnienie fazy i punkt na obwodzie.
- */
 @Composable
 private fun BreathingCircle(
     scaleProvider: () -> Float,
     progressProvider: () -> Float,
+    topUpProvider: () -> Float,
     isPaused: Boolean,
     phase: BreathPhase,
     modifier: Modifier = Modifier
@@ -250,11 +263,40 @@ private fun BreathingCircle(
     )
 
     Box(
-        modifier = modifier.size(260.dp),
+        modifier = modifier.size(stageSize),
         contentAlignment = Alignment.Center
     ) {
-        // Zewnętrzny pierścień postępu całej sesji.
-        Canvas(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .size(breathCircleSize)
+                .graphicsLayer {
+                    val scale = if (isPaused) idlePulse * CIRCLE_MIN_SCALE else scaleProvider()
+                    scaleX = scale
+                    scaleY = scale
+                    alpha = 0.35f + 0.65f * ((scale - CIRCLE_MIN_SCALE) /
+                        (CIRCLE_MAX_SCALE - CIRCLE_MIN_SCALE)).coerceIn(0f, 1f)
+                }
+                .border(1.dp, accentColor, CircleShape)
+                .drawBehind {
+                    drawCircle(color = accentColor, alpha = 0.05f)
+                }
+        )
+
+        Canvas(modifier = Modifier.size(stageSize)) {
+            val progress = topUpProvider()
+            if (progress > 0f) {
+                val startRadius = breathCircleSize.toPx() / 2f
+                val endRadius = stageSize.toPx() / 2f
+                drawCircle(
+                    color = accentColor,
+                    radius = startRadius + (endRadius - startRadius) * progress,
+                    alpha = 0.35f * (1f - progress),
+                    style = Stroke(width = 1.dp.toPx())
+                )
+            }
+        }
+
+        Canvas(modifier = Modifier.size(ringSize)) {
             val stroke = 2.dp.toPx()
             val inset = stroke / 2f
             val arcSize = Size(size.width - stroke, size.height - stroke)
@@ -278,7 +320,6 @@ private fun BreathingCircle(
                 style = Stroke(width = stroke)
             )
 
-            // Punkt na obwodzie oznaczający bieżący postęp.
             val angleRad = Math.toRadians((-90f + 360f * progressProvider()).toDouble())
             val radius = (size.minDimension - stroke) / 2f
             drawCircle(
@@ -290,23 +331,6 @@ private fun BreathingCircle(
                 )
             )
         }
-
-        // Okrąg oddechu — skaluje się między wdechem a wydechem.
-        Box(
-            modifier = Modifier
-                .size(190.dp)
-                .graphicsLayer {
-                    val scale = if (isPaused) idlePulse * CIRCLE_MIN_SCALE else scaleProvider()
-                    scaleX = scale
-                    scaleY = scale
-                    alpha = 0.35f + 0.65f * ((scale - CIRCLE_MIN_SCALE) /
-                        (CIRCLE_MAX_SCALE - CIRCLE_MIN_SCALE)).coerceIn(0f, 1f)
-                }
-                .border(1.dp, accentColor, CircleShape)
-                .drawBehind {
-                    drawCircle(color = accentColor, alpha = 0.05f)
-                }
-        )
 
         AnimatedContent(
             targetState = if (isPaused) "WSTRZYMANE" else phase.label,
@@ -410,16 +434,23 @@ private fun ControlButton(
     }
 }
 
-/**
- * Skala okręgu dla danej fazy oddechu. Wdech rośnie, wydech maleje, zatrzymania trzymają wartość.
- */
-private fun scaleFor(phase: BreathPhase, progress: Float): Float {
-    val eased = FastOutSlowInEasing.transform(progress.coerceIn(0f, 1f))
-    val span = CIRCLE_MAX_SCALE - CIRCLE_MIN_SCALE
+private fun scaleFor(phase: BreathPhase, progress: Float, hasTopUp: Boolean): Float {
+    val clamped = progress.coerceIn(0f, 1f)
+    val peak = if (hasTopUp) CIRCLE_TOP_UP_SCALE else CIRCLE_MAX_SCALE
     return when (phase) {
-        BreathPhase.INHALE -> CIRCLE_MIN_SCALE + span * eased
-        BreathPhase.HOLD_IN -> CIRCLE_MAX_SCALE
-        BreathPhase.EXHALE -> CIRCLE_MAX_SCALE - span * eased
+        BreathPhase.INHALE -> {
+            val eased = FastOutSlowInEasing.transform(clamped)
+            CIRCLE_MIN_SCALE + (CIRCLE_MAX_SCALE - CIRCLE_MIN_SCALE) * eased
+        }
+        BreathPhase.INHALE_TOP -> {
+            val eased = LinearOutSlowInEasing.transform(clamped)
+            CIRCLE_MAX_SCALE + (CIRCLE_TOP_UP_SCALE - CIRCLE_MAX_SCALE) * eased
+        }
+        BreathPhase.HOLD_IN -> peak
+        BreathPhase.EXHALE -> {
+            val eased = FastOutSlowInEasing.transform(clamped)
+            peak - (peak - CIRCLE_MIN_SCALE) * eased
+        }
         BreathPhase.HOLD_OUT -> CIRCLE_MIN_SCALE
     }
 }

@@ -4,35 +4,34 @@ import java.time.LocalTime
 
 enum class BreathPhase(val label: String) {
     INHALE("WDECH"),
+    INHALE_TOP("DOBIERZ"),
     HOLD_IN("ZATRZYMAJ"),
     EXHALE("WYDECH"),
     HOLD_OUT("ZATRZYMAJ")
 }
 
-/**
- * Wzorzec oddechu wyrażony w sekundach. Zero oznacza pominięcie fazy.
- */
 data class BreathPattern(
     val inhaleSeconds: Int,
     val holdInSeconds: Int,
     val exhaleSeconds: Int,
-    val holdOutSeconds: Int
+    val holdOutSeconds: Int,
+    val inhaleTopSeconds: Int = 0
 ) {
-    val cycleSeconds: Int
-        get() = inhaleSeconds + holdInSeconds + exhaleSeconds + holdOutSeconds
+    val hasTopUp: Boolean
+        get() = inhaleTopSeconds > 0
 
-    /** Kolejność faz z pominięciem tych o zerowej długości. */
+    val cycleSeconds: Int
+        get() = inhaleSeconds + inhaleTopSeconds + holdInSeconds + exhaleSeconds + holdOutSeconds
+
     val phases: List<Pair<BreathPhase, Int>>
         get() = listOf(
             BreathPhase.INHALE to inhaleSeconds,
+            BreathPhase.INHALE_TOP to inhaleTopSeconds,
             BreathPhase.HOLD_IN to holdInSeconds,
             BreathPhase.EXHALE to exhaleSeconds,
             BreathPhase.HOLD_OUT to holdOutSeconds
         ).filter { it.second > 0 }
 
-    /**
-     * Zwraca fazę oraz postęp w jej obrębie (0f..1f) dla podanej sekundy sesji.
-     */
     fun phaseAt(elapsedSeconds: Int): Pair<BreathPhase, Float> {
         val activePhases = phases
         if (activePhases.isEmpty() || cycleSeconds == 0) {
@@ -49,9 +48,6 @@ data class BreathPattern(
         return last.first to 1f
     }
 
-    /**
-     * Wersja [phaseAt] z dokładnością do milisekund — używana do płynnej animacji.
-     */
     fun phaseAtMillis(elapsedMillis: Long): Pair<BreathPhase, Float> {
         val activePhases = phases
         if (activePhases.isEmpty() || cycleSeconds == 0) {
@@ -71,9 +67,13 @@ data class BreathPattern(
     }
 
     val shortLabel: String
-        get() = listOf(inhaleSeconds, holdInSeconds, exhaleSeconds, holdOutSeconds)
-            .filter { it > 0 }
-            .joinToString("-")
+        get() {
+            val head = if (hasTopUp) "$inhaleSeconds+$inhaleTopSeconds" else "$inhaleSeconds"
+            val tail = listOf(holdInSeconds, exhaleSeconds, holdOutSeconds)
+                .filter { it > 0 }
+                .map { it.toString() }
+            return (listOf(head) + tail).joinToString("-")
+        }
 }
 
 enum class SessionCategory(val label: String) {
@@ -92,7 +92,6 @@ data class SessionTemplate(
     val defaultDurationSeconds: Int,
     val category: SessionCategory
 ) {
-    /** Krótki opis pod nazwą, np. "5 min · box breathing". */
     fun meta(durationSeconds: Int = defaultDurationSeconds): String =
         "${durationSeconds / 60} min · $technique"
 }
@@ -142,9 +141,15 @@ object SessionCatalog {
             id = "reset",
             name = "Szybki reset",
             technique = "physiological sigh",
-            description = "Dwa wdechy, jeden długi wydech. Najszybszy sposób na zbicie napięcia " +
-                "między jednym a drugim zadaniem.",
-            pattern = BreathPattern(3, 1, 6, 0),
+            description = "Wdech, krótkie dobranie powietrza na szczycie, długi wydech. Najszybszy " +
+                "sposób na zbicie napięcia między jednym a drugim zadaniem.",
+            pattern = BreathPattern(
+                inhaleSeconds = 3,
+                holdInSeconds = 0,
+                exhaleSeconds = 6,
+                holdOutSeconds = 0,
+                inhaleTopSeconds = 1
+            ),
             defaultDurationSeconds = 180,
             category = SessionCategory.FOCUS
         ),
@@ -186,7 +191,6 @@ object SessionCatalog {
         )
     )
 
-    /** Dostępne długości sesji w minutach pokazywane w wyborze. */
     val durationOptionsMinutes: List<Int> = listOf(1, 3, 5, 10, 15, 20, 30)
 
     fun byId(id: String): SessionTemplate? = templates.firstOrNull { it.id == id }
@@ -194,9 +198,6 @@ object SessionCatalog {
     fun byCategory(category: SessionCategory): List<SessionTemplate> =
         templates.filter { it.category == category }
 
-    /**
-     * Sesja proponowana o danej porze dnia — podświetlana kropką na liście.
-     */
     fun suggestedFor(time: LocalTime = LocalTime.now()): SessionTemplate {
         val category = when (time.hour) {
             in 5..10 -> SessionCategory.MORNING
@@ -207,7 +208,6 @@ object SessionCatalog {
         return byCategory(category).firstOrNull() ?: templates.first()
     }
 
-    /** Skrót na ekran główny — propozycja na teraz plus kilka kolejnych. */
     fun featured(time: LocalTime = LocalTime.now(), count: Int = 4): List<SessionTemplate> {
         val suggested = suggestedFor(time)
         return (listOf(suggested) + templates.filter { it.id != suggested.id }).take(count)
