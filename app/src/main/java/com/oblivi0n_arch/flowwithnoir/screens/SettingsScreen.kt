@@ -59,9 +59,15 @@ import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.oblivi0n_arch.flowwithnoir.BuildConfig
 import com.oblivi0n_arch.flowwithnoir.ReminderSettings
+import com.oblivi0n_arch.flowwithnoir.reminder.ReminderReceiver
+import com.oblivi0n_arch.flowwithnoir.reminder.ReminderScheduler
 import com.oblivi0n_arch.flowwithnoir.ui.theme.FlowWithNoirTheme
 import com.oblivi0n_arch.flowwithnoir.ui.theme.ThemeMode
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 private const val RESET_CONFIRMATION_WORD = "RESET"
 
@@ -286,6 +292,71 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.secondary
             )
 
+            if (BuildConfig.DEBUG) {
+                SectionLabel("DEBUG", topPadding = 26.dp)
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(14.dp))
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                context.sendBroadcast(
+                                    Intent(context, ReminderReceiver::class.java)
+                                )
+                            }
+                            .padding(vertical = 14.dp, horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Wyślij przypomnienie teraz",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                            Text(
+                                text = "Cała ścieżka odbiornika, łącznie z pomijaniem po sesji",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                        }
+                        Text(
+                            text = "→",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+
+                    Column(modifier = Modifier.padding(vertical = 14.dp, horizontal = 16.dp)) {
+                        Text(
+                            text = "Najbliższy alarm",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Text(
+                            text = if (reminder.isEnabled) {
+                                formatTrigger(
+                                    ReminderScheduler.nextTriggerMillis(
+                                        reminder.hour,
+                                        reminder.minute
+                                    )
+                                )
+                            } else {
+                                "Przypomnienie wyłączone"
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(30.dp))
         }
 
@@ -490,6 +561,12 @@ private fun PermissionNotice(onOpenSettings: () -> Unit) {
             )
         }
     }
+}
+
+private fun formatTrigger(triggerMillis: Long): String {
+    val time = SimpleDateFormat("EEEE, HH:mm", Locale("pl")).format(Date(triggerMillis))
+    val minutesAway = (triggerMillis - System.currentTimeMillis()) / 60_000L
+    return "$time · za $minutesAway min"
 }
 
 private fun Context.findActivity(): ComponentActivity? {
