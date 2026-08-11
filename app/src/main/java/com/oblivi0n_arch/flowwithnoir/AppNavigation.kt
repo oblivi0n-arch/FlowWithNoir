@@ -1,6 +1,5 @@
 package com.oblivi0n_arch.flowwithnoir
 
-import android.R.attr.type
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -23,11 +22,13 @@ import androidx.navigation.navArgument
 import com.oblivi0n_arch.flowwithnoir.data.AppDatabase
 import com.oblivi0n_arch.flowwithnoir.data.JournalRepository
 import com.oblivi0n_arch.flowwithnoir.data.ProfileStats
+import com.oblivi0n_arch.flowwithnoir.data.SessionCatalog
 import com.oblivi0n_arch.flowwithnoir.screens.HistoryScreen
 import com.oblivi0n_arch.flowwithnoir.screens.HomeScreen
 import com.oblivi0n_arch.flowwithnoir.screens.JournalListScreen
 import com.oblivi0n_arch.flowwithnoir.screens.JournalScreen
 import com.oblivi0n_arch.flowwithnoir.screens.ProfileScreen
+import com.oblivi0n_arch.flowwithnoir.screens.SessionCatalogScreen
 import com.oblivi0n_arch.flowwithnoir.screens.SessionScreen
 import com.oblivi0n_arch.flowwithnoir.screens.SettingsScreen
 import com.oblivi0n_arch.flowwithnoir.screens.SplashScreen
@@ -39,13 +40,18 @@ object Routes {
     const val SPLASH = "splash"
     const val WELCOME = "welcome"
     const val HOME = "home"
-    const val SESSION = "session/{name}/{duration}"
-    const val JOURNAL = "journal/{name}/{duration}"
+    const val SESSION = "session/{templateId}/{duration}"
+    const val SESSION_CATALOG = "session_catalog"
+    const val JOURNAL = "journal/{templateId}/{duration}"
     const val JOURNAL_ENTRY = "journal_entry"
     const val JOURNAL_LIST = "journal_list"
     const val HISTORY = "history"
     const val PROFILE = "profile"
     const val SETTINGS = "settings"
+
+    fun session(templateId: String, durationSeconds: Int) = "session/$templateId/$durationSeconds"
+
+    fun journal(templateId: String, durationSeconds: Int) = "journal/$templateId/$durationSeconds"
 }
 
 @Composable
@@ -100,8 +106,11 @@ fun AppNavigation() {
             } ?: "Brak wpisów"
 
             HomeScreen(
-                onSessionClick = { name, duration ->
-                    navController.navigate("session/$name/$duration")
+                onSessionStart = { templateId, duration ->
+                    navController.navigate(Routes.session(templateId, duration))
+                },
+                onAllSessionsClick = {
+                    navController.navigate(Routes.SESSION_CATALOG)
                 },
                 onHistoryClick = {
                     navController.navigate(Routes.HISTORY)
@@ -118,6 +127,15 @@ fun AppNavigation() {
                 streakDays = streakDays,
                 lastEntrySummary = lastEntrySummary,
                 nickname = nickname ?: ""
+            )
+        }
+
+        composable(Routes.SESSION_CATALOG) {
+            SessionCatalogScreen(
+                onBack = { navController.popBackStack() },
+                onStart = { templateId, duration ->
+                    navController.navigate(Routes.session(templateId, duration))
+                }
             )
         }
 
@@ -190,46 +208,52 @@ fun AppNavigation() {
         composable(
             route = Routes.SESSION,
             arguments = listOf(
-                navArgument("name") { type = NavType.StringType },
+                navArgument("templateId") { type = NavType.StringType },
                 navArgument("duration") { type = NavType.IntType }
             )
         ) { backStackEntry ->
-            val name = backStackEntry.arguments?.getString("name") ?: ""
+            val templateId = backStackEntry.arguments?.getString("templateId").orEmpty()
             val duration = backStackEntry.arguments?.getInt("duration") ?: 0
+            val template = SessionCatalog.byId(templateId)
 
-            SessionScreen(
-                sessionName = name,
-                durationSeconds = duration,
-                onClose = { elapsedSeconds ->
-                    if (elapsedSeconds >= MIN_INTERRUPTED_SESSION_SECONDS) {
-                        scope.launch {
-                            journalRepository.logSession(
-                                sessionName = name,
-                                plannedDurationSeconds = duration,
-                                actualDurationSeconds = elapsedSeconds,
-                                isCompleted = false
-                            )
+            if (template == null) {
+                LaunchedEffect(templateId) { navController.popBackStack() }
+            } else {
+                SessionScreen(
+                    template = template,
+                    durationSeconds = duration,
+                    onClose = { elapsedSeconds ->
+                        if (elapsedSeconds >= MIN_INTERRUPTED_SESSION_SECONDS) {
+                            scope.launch {
+                                journalRepository.logSession(
+                                    sessionName = template.name,
+                                    plannedDurationSeconds = duration,
+                                    actualDurationSeconds = elapsedSeconds,
+                                    isCompleted = false
+                                )
+                            }
+                        }
+                        navController.popBackStack()
+                    },
+                    onFinished = {
+                        navController.navigate(Routes.journal(templateId, duration)) {
+                            popUpTo(Routes.HOME)
                         }
                     }
-                    navController.popBackStack()
-                },
-                onFinished = {
-                    navController.navigate("journal/$name/$duration") {
-                        popUpTo(Routes.HOME)
-                    }
-                }
-            )
+                )
+            }
         }
 
         composable(
             route = Routes.JOURNAL,
             arguments = listOf(
-                navArgument("name") { type = NavType.StringType },
+                navArgument("templateId") { type = NavType.StringType },
                 navArgument("duration") { type = NavType.IntType }
             )
         ) { backStackEntry ->
-            val name = backStackEntry.arguments?.getString("name") ?: ""
+            val templateId = backStackEntry.arguments?.getString("templateId").orEmpty()
             val duration = backStackEntry.arguments?.getInt("duration") ?: 0
+            val name = SessionCatalog.byId(templateId)?.name ?: "Sesja"
 
             JournalScreen(
                 onSkip = {
