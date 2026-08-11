@@ -1,5 +1,7 @@
 package com.oblivi0n_arch.flowwithnoir.screens
 
+import android.os.Build
+import android.view.WindowManager
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -261,6 +263,19 @@ private fun ImmersiveSystemBars() {
     DisposableEffect(activity) {
         val window = activity?.window
         val controller = window?.let { WindowCompat.getInsetsController(it, it.decorView) }
+        val supportsCutoutMode = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
+        val previousCutoutMode = if (window != null && supportsCutoutMode) {
+            window.attributes.layoutInDisplayCutoutMode
+        } else {
+            null
+        }
+
+        if (window != null && supportsCutoutMode) {
+            window.attributes = window.attributes.apply {
+                layoutInDisplayCutoutMode =
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
+        }
 
         controller?.apply {
             systemBarsBehavior =
@@ -270,6 +285,11 @@ private fun ImmersiveSystemBars() {
 
         onDispose {
             controller?.show(WindowInsetsCompat.Type.systemBars())
+            if (window != null && previousCutoutMode != null) {
+                window.attributes = window.attributes.apply {
+                    layoutInDisplayCutoutMode = previousCutoutMode
+                }
+            }
         }
     }
 }
