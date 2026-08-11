@@ -23,6 +23,7 @@ import com.oblivi0n_arch.flowwithnoir.data.AppDatabase
 import com.oblivi0n_arch.flowwithnoir.data.JournalRepository
 import com.oblivi0n_arch.flowwithnoir.data.ProfileStats
 import com.oblivi0n_arch.flowwithnoir.data.SessionCatalog
+import com.oblivi0n_arch.flowwithnoir.reminder.ReminderScheduler
 import com.oblivi0n_arch.flowwithnoir.screens.HistoryScreen
 import com.oblivi0n_arch.flowwithnoir.screens.HomeScreen
 import com.oblivi0n_arch.flowwithnoir.screens.JournalEntryScreen
@@ -69,6 +70,13 @@ fun AppNavigation() {
     val preferences = remember { AppPreferences(context) }
     val journalRepository = remember { JournalRepository(AppDatabase.getInstance(context).journalDao()) }
     val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        val reminder = preferences.reminderSettings()
+        if (reminder.isEnabled) {
+            ReminderScheduler.schedule(context, reminder.hour, reminder.minute)
+        }
+    }
 
     NavHost(navController = navController, startDestination = Routes.SPLASH) {
 
@@ -204,12 +212,54 @@ fun AppNavigation() {
 
         composable(Routes.SETTINGS) {
             val themeMode by preferences.themeModeFlow().collectAsState(initial = ThemeMode.SYSTEM)
+            val reminder by preferences.reminderSettingsFlow()
+                .collectAsState(initial = ReminderSettings())
 
             SettingsScreen(
                 themeMode = themeMode,
+                reminder = reminder,
+                onBack = { navController.popBackStack() },
                 onThemeModeChange = { newThemeMode ->
                     scope.launch {
                         preferences.setThemeMode(newThemeMode)
+                    }
+                },
+                onReminderEnabledChange = { isEnabled ->
+                    scope.launch {
+                        preferences.setReminderEnabled(isEnabled)
+                        if (isEnabled) {
+                            ReminderScheduler.schedule(context, reminder.hour, reminder.minute)
+                        } else {
+                            ReminderScheduler.cancel(context)
+                        }
+                    }
+                },
+                onReminderTimeChange = { hour, minute ->
+                    scope.launch {
+                        preferences.setReminderTime(hour, minute)
+                        if (reminder.isEnabled) {
+                            ReminderScheduler.schedule(context, hour, minute)
+                        }
+                    }
+                },
+                onSkipAfterSessionChange = { skip ->
+                    scope.launch {
+                        preferences.setSkipAfterSession(skip)
+                    }
+                },
+                onClearJournal = {
+                    scope.launch {
+                        journalRepository.deleteAll()
+                    }
+                },
+                onFullReset = {
+                    scope.launch {
+                        journalRepository.deleteAll()
+                        preferences.clearAll()
+                        ReminderScheduler.cancel(context)
+                        navController.navigate(Routes.WELCOME) {
+                            popUpTo(0) { inclusive = true }
+                        }
                     }
                 }
             )
