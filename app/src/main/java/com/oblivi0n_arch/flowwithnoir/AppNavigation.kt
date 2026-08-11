@@ -283,11 +283,6 @@ fun AppNavigation() {
                         preferences.setSkipAfterSession(skip)
                     }
                 },
-                onClearJournal = {
-                    scope.launch {
-                        journalRepository.deleteAll()
-                    }
-                },
                 onFullReset = {
                     scope.launch {
                         journalRepository.deleteAll()

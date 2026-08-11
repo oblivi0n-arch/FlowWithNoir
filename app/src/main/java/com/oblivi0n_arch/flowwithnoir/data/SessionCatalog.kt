@@ -79,7 +79,7 @@ data class BreathPattern(
 enum class SessionCategory(val label: String) {
     MORNING("Poranek"),
     FOCUS("Skupienie"),
-    CALM("Wyciszenie"),
+    CALM("Cisza"),
     SLEEP("Sen")
 }
 

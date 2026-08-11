@@ -1,5 +1,6 @@
 package com.oblivi0n_arch.flowwithnoir.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -77,6 +78,20 @@ fun JournalScreen(
     val focusManager = LocalFocusManager.current
     val noteFocusRequester = remember { FocusRequester() }
 
+    var showDiscardDialog by remember { mutableStateOf(false) }
+    val hasUnsavedContent = title.trim() != initialTitle.trim() ||
+        note.trim() != initialNote.trim() ||
+        selectedFeeling != initialFeeling ||
+        selectedTags != initialTags.toSet()
+
+    val requestLeave = {
+        if (hasUnsavedContent) showDiscardDialog = true else onSkip()
+    }
+
+    BackHandler(enabled = hasUnsavedContent) {
+        showDiscardDialog = true
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -99,7 +114,7 @@ fun JournalScreen(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.secondary,
                 modifier = Modifier
-                    .clickable(onClick = onSkip)
+                    .clickable(onClick = requestLeave)
                     .padding(vertical = 4.dp)
             )
             Text(
@@ -205,6 +220,58 @@ fun JournalScreen(
                 )
             }
         }
+    }
+
+    if (showDiscardDialog) {
+        val isEdit = mode == JournalMode.EDIT
+        val isAfterSession = mode == JournalMode.AFTER_SESSION
+
+        AlertDialog(
+            onDismissRequest = { showDiscardDialog = false },
+            containerColor = MaterialTheme.colorScheme.background,
+            title = {
+                Text(
+                    text = when {
+                        isEdit -> "Odrzucić zmiany?"
+                        isAfterSession -> "Pominąć wpis?"
+                        else -> "Wyjść bez zapisania?"
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            },
+            text = {
+                Text(
+                    text = when {
+                        isEdit -> "Wprowadzone zmiany nie zostaną zapisane."
+                        isAfterSession -> "To, co napisałaś, przepadnie. " +
+                            "Sama sesja i tak trafi do historii."
+                        else -> "Ten wpis nie zostanie zapisany."
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDiscardDialog = false
+                    onSkip()
+                }) {
+                    Text(
+                        text = if (isEdit) "Odrzuć" else "Wyjdź",
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDiscardDialog = false }) {
+                    Text(
+                        text = "Wróć do pisania",
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                }
+            }
+        )
     }
 
     if (showTagSheet) {

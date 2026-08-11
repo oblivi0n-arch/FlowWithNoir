@@ -77,7 +77,6 @@ fun SettingsScreen(
     onReminderEnabledChange: (Boolean) -> Unit = {},
     onReminderTimeChange: (hour: Int, minute: Int) -> Unit = { _, _ -> },
     onSkipAfterSessionChange: (Boolean) -> Unit = {},
-    onClearJournal: () -> Unit = {},
     onFullReset: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -87,7 +86,6 @@ fun SettingsScreen(
         mutableStateOf(NotificationManagerCompat.from(context).areNotificationsEnabled())
     }
     var showTimePicker by remember { mutableStateOf(false) }
-    var showClearJournalDialog by remember { mutableStateOf(false) }
     var showResetDialog by remember { mutableStateOf(false) }
 
     DisposableEffect(activity) {
@@ -259,23 +257,6 @@ fun SettingsScreen(
             SectionLabel("DANE", topPadding = 26.dp)
 
             Text(
-                text = "Wyczyść dziennik",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { showClearJournalDialog = true }
-                    .padding(vertical = 12.dp)
-            )
-            Text(
-                text = "Usuwa wpisy i historię sesji. Nick, motyw i przypomnienia zostają.",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.secondary
-            )
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            Text(
                 text = "Reset aplikacji",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onBackground,
@@ -384,28 +365,6 @@ fun SettingsScreen(
             onConfirm = { hour, minute ->
                 showTimePicker = false
                 onReminderTimeChange(hour, minute)
-            }
-        )
-    }
-
-    if (showClearJournalDialog) {
-        AlertDialog(
-            onDismissRequest = { showClearJournalDialog = false },
-            containerColor = MaterialTheme.colorScheme.background,
-            title = { Text("Wyczyścić dziennik?") },
-            text = { Text("Usuniesz wszystkie wpisy i historię sesji. Tej operacji nie da się cofnąć.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    showClearJournalDialog = false
-                    onClearJournal()
-                }) {
-                    Text("Wyczyść")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showClearJournalDialog = false }) {
-                    Text("Anuluj")
-                }
             }
         )
     }
