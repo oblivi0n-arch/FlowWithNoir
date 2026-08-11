@@ -64,7 +64,9 @@ fun SessionCatalogScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 26.dp, vertical = 52.dp)
+            .screenInsets()
+            .padding(horizontal = screenPaddingHorizontal)
+            .padding(top = screenPaddingTop, bottom = screenPaddingBottom)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(

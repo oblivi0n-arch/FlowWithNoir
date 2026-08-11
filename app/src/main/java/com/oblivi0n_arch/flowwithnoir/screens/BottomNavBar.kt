@@ -10,9 +10,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -68,11 +73,16 @@ fun BottomNavBar(
     }
 }
 
-val screenPaddingTop = 52.dp
+val screenPaddingTop = 24.dp
 
-val screenPaddingBottom = 20.dp
+val screenPaddingBottom = 12.dp
 
 val screenPaddingHorizontal = 26.dp
+
+@Composable
+fun Modifier.screenInsets(): Modifier = this.windowInsetsPadding(
+    WindowInsets.systemBars.union(WindowInsets.displayCutout)
+)
 
 @Composable
 fun NavIcon(icon: ImageVector, isActive: Boolean, onClick: () -> Unit = {}) {

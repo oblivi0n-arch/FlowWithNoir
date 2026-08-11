@@ -163,7 +163,8 @@ fun SessionScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .alpha(contentAlpha)
-                .padding(horizontal = 30.dp, vertical = 70.dp),
+                .screenInsets()
+                .padding(horizontal = 30.dp, vertical = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(

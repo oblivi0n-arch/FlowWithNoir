@@ -118,6 +118,7 @@ fun SettingsScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .screenInsets()
             .padding(horizontal = screenPaddingHorizontal)
             .padding(top = screenPaddingTop, bottom = screenPaddingBottom)
     ) {

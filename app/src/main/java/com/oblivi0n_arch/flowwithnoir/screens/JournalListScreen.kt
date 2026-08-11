@@ -93,6 +93,7 @@ fun JournalListScreen(
             .pointerInput(Unit) {
                 detectTapGestures(onTap = { focusManager.clearFocus() })
             }
+            .screenInsets()
             .padding(horizontal = screenPaddingHorizontal)
             .padding(top = screenPaddingTop, bottom = screenPaddingBottom)
     ) {

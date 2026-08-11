@@ -14,13 +14,17 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -35,7 +39,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -97,13 +103,19 @@ fun OnboardingScreen(onFinish: (OnboardingResult) -> Unit) {
         )
     }
 
+    val focusManager = LocalFocusManager.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = { focusManager.clearFocus() })
+            }
+            .screenInsets()
             .imePadding()
             .padding(horizontal = 30.dp)
-            .padding(top = 52.dp, bottom = 28.dp)
+            .padding(top = 20.dp, bottom = 16.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -208,7 +220,11 @@ private fun PageScaffold(
     subtitle: String,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+    ) {
         Spacer(modifier = Modifier.height(36.dp))
         Text(
             text = eyebrow,
@@ -229,6 +245,7 @@ private fun PageScaffold(
         )
         Spacer(modifier = Modifier.height(32.dp))
         content()
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
@@ -259,6 +276,8 @@ private fun IntroPage() {
 
 @Composable
 private fun NicknamePage(nickname: String, onNicknameChange: (String) -> Unit) {
+    val focusManager = LocalFocusManager.current
+
     PageScaffold(
         eyebrow = "KROK 1",
         title = "Jak mam się\ndo ciebie zwracać?",
@@ -286,6 +305,7 @@ private fun NicknamePage(nickname: String, onNicknameChange: (String) -> Unit) {
                 ),
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.onBackground),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                 modifier = Modifier.fillMaxWidth()
             )
         }
