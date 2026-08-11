@@ -36,12 +36,12 @@ import com.oblivi0n_arch.flowwithnoir.screens.JournalEntryScreen
 import com.oblivi0n_arch.flowwithnoir.screens.JournalListScreen
 import com.oblivi0n_arch.flowwithnoir.screens.JournalMode
 import com.oblivi0n_arch.flowwithnoir.screens.JournalScreen
+import com.oblivi0n_arch.flowwithnoir.screens.OnboardingScreen
 import com.oblivi0n_arch.flowwithnoir.screens.ProfileScreen
 import com.oblivi0n_arch.flowwithnoir.screens.SessionCatalogScreen
 import com.oblivi0n_arch.flowwithnoir.screens.SessionScreen
 import com.oblivi0n_arch.flowwithnoir.screens.SettingsScreen
 import com.oblivi0n_arch.flowwithnoir.screens.SplashScreen
-import com.oblivi0n_arch.flowwithnoir.screens.WelcomeScreen
 import com.oblivi0n_arch.flowwithnoir.ui.theme.ThemeMode
 import kotlinx.coroutines.launch
 
@@ -114,9 +114,17 @@ fun AppNavigation() {
         }
 
         composable(Routes.WELCOME) {
-            WelcomeScreen(
-                onStartClick = {
+            OnboardingScreen(
+                onFinish = { result ->
                     scope.launch {
+                        if (result.nickname.isNotBlank()) {
+                            preferences.setNickname(result.nickname)
+                        }
+                        preferences.setReminderTime(result.hour, result.minute)
+                        preferences.setReminderEnabled(result.isReminderEnabled)
+                        if (result.isReminderEnabled) {
+                            ReminderScheduler.schedule(context, result.hour, result.minute)
+                        }
                         preferences.setFirstLaunchDone()
                         navController.navigate(Routes.HOME) {
                             popUpTo(Routes.WELCOME) { inclusive = true }

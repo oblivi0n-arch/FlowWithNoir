@@ -89,6 +89,49 @@ fun Modifier.staggeredReveal(order: Int, isPlaying: Boolean): Modifier {
 }
 
 @Composable
+fun BreathingRing(
+    pattern: BreathPattern,
+    modifier: Modifier = Modifier,
+    sizeDp: Dp = 150.dp,
+    strokeDp: Dp = 1.dp,
+    minScale: Float = 0.62f
+) {
+    val cycleMillis = (pattern.cycleSeconds * 1000).coerceAtLeast(1000)
+    val transition = rememberInfiniteTransition(label = "breathRing")
+    val time by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(cycleMillis, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "breathRingTime"
+    )
+
+    val strokeColor = MaterialTheme.colorScheme.onBackground
+
+    Box(
+        modifier = modifier
+            .size(sizeDp)
+            .graphicsLayer {
+                val (phase, phaseProgress) = pattern.phaseAtMillis((time * cycleMillis).toLong())
+                val scale = breathScale(
+                    phase = phase,
+                    progress = phaseProgress,
+                    hasTopUp = pattern.hasTopUp,
+                    minScale = minScale,
+                    maxScale = 1f,
+                    topUpScale = 1.12f
+                )
+                scaleX = scale
+                scaleY = scale
+                alpha = 0.45f + 0.55f * ((scale - minScale) / (1f - minScale)).coerceIn(0f, 1f)
+            }
+            .border(strokeDp, strokeColor, CircleShape)
+    )
+}
+
+@Composable
 fun BreathingDot(
     pattern: BreathPattern,
     modifier: Modifier = Modifier,
