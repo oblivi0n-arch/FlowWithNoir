@@ -1,13 +1,10 @@
 package com.oblivi0n_arch.flowwithnoir.screens
 
 import android.Manifest
-import android.content.Context
-import android.content.ContextWrapper
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -568,15 +565,6 @@ private fun formatTrigger(triggerMillis: Long): String {
     val time = SimpleDateFormat("EEEE, HH:mm", Locale("pl")).format(Date(triggerMillis))
     val minutesAway = (triggerMillis - System.currentTimeMillis()) / 60_000L
     return "$time · za $minutesAway min"
-}
-
-private fun Context.findActivity(): ComponentActivity? {
-    var current: Context? = this
-    while (current is ContextWrapper) {
-        if (current is ComponentActivity) return current
-        current = current.baseContext
-    }
-    return null
 }
 
 @Composable

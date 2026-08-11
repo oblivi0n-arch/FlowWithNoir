@@ -27,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -46,9 +47,13 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.oblivi0n_arch.flowwithnoir.BuildConfig
 import com.oblivi0n_arch.flowwithnoir.data.BreathPhase
 import com.oblivi0n_arch.flowwithnoir.data.SessionCatalog
@@ -92,6 +97,8 @@ fun SessionScreen(
     val secondsLeft by remember {
         derivedStateOf { ((totalMillis - elapsedMillis) / 1000L).toInt().coerceAtLeast(0) }
     }
+
+    ImmersiveSystemBars()
 
     LaunchedEffect(isPaused, isFinishing) {
         if (isPaused || isFinishing) return@LaunchedEffect
@@ -243,6 +250,27 @@ fun SessionScreen(
         }
 
         FinishOverlay(isVisible = isFinishing)
+    }
+}
+
+@Composable
+private fun ImmersiveSystemBars() {
+    val context = LocalContext.current
+    val activity = remember(context) { context.findActivity() }
+
+    DisposableEffect(activity) {
+        val window = activity?.window
+        val controller = window?.let { WindowCompat.getInsetsController(it, it.decorView) }
+
+        controller?.apply {
+            systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            hide(WindowInsetsCompat.Type.systemBars())
+        }
+
+        onDispose {
+            controller?.show(WindowInsetsCompat.Type.systemBars())
+        }
     }
 }
 

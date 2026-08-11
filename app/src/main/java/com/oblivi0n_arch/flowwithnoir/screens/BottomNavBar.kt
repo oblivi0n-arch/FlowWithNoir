@@ -1,5 +1,8 @@
 package com.oblivi0n_arch.flowwithnoir.screens
 
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.activity.ComponentActivity
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -83,6 +86,15 @@ val screenPaddingHorizontal = 26.dp
 fun Modifier.screenInsets(): Modifier = this.windowInsetsPadding(
     WindowInsets.systemBars.union(WindowInsets.displayCutout)
 )
+
+internal fun Context.findActivity(): ComponentActivity? {
+    var current: Context? = this
+    while (current is ContextWrapper) {
+        if (current is ComponentActivity) return current
+        current = current.baseContext
+    }
+    return null
+}
 
 @Composable
 fun NavIcon(icon: ImageVector, isActive: Boolean, onClick: () -> Unit = {}) {
