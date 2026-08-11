@@ -7,10 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.MenuBook
-import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -43,7 +40,8 @@ fun ProfileScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 26.dp, vertical = 52.dp)
+            .padding(horizontal = screenPaddingHorizontal)
+            .padding(top = screenPaddingTop, bottom = screenPaddingBottom)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -121,16 +119,11 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp, bottom = 8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            NavIcon(icon = Icons.Filled.SelfImprovement, isActive = false, onClick = onHomeClick)
-            NavIcon(icon = Icons.Filled.MenuBook, isActive = false, onClick = onJournalListClick)
-            NavIcon(icon = Icons.Filled.AccountCircle, isActive = true)
-        }
+        BottomNavBar(
+            selected = NavTab.PROFILE,
+            onSessionsClick = onHomeClick,
+            onJournalClick = onJournalListClick
+        )
     }
 
     if (showEditDialog) {

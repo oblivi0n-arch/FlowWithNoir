@@ -1,0 +1,133 @@
+package com.oblivi0n_arch.flowwithnoir.screens
+
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.SelfImprovement
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
+
+/**
+ * Zakładki dolnej nawigacji. Ekrany bez paska (sesja, ustawienia, historia,
+ * katalog) świadomie go nie pokazują.
+ */
+enum class NavTab {
+    SESSIONS,
+    JOURNAL,
+    PROFILE
+}
+
+/**
+ * Wspólny pasek nawigacji o stałej geometrii — trzymany w jednym miejscu, żeby
+ * wysokość nie rozjeżdżała się między ekranami. Zakłada, że rodzic używa
+ * [screenPaddingTop] / [screenPaddingBottom] jako paddingu ekranu.
+ */
+@Composable
+fun BottomNavBar(
+    selected: NavTab,
+    onSessionsClick: () -> Unit = {},
+    onJournalClick: () -> Unit = {},
+    onProfileClick: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp, bottom = 8.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        NavIcon(
+            icon = Icons.Filled.SelfImprovement,
+            isActive = selected == NavTab.SESSIONS,
+            onClick = { if (selected != NavTab.SESSIONS) onSessionsClick() }
+        )
+        NavIcon(
+            icon = Icons.Filled.MenuBook,
+            isActive = selected == NavTab.JOURNAL,
+            onClick = { if (selected != NavTab.JOURNAL) onJournalClick() }
+        )
+        NavIcon(
+            icon = Icons.Filled.AccountCircle,
+            isActive = selected == NavTab.PROFILE,
+            onClick = { if (selected != NavTab.PROFILE) onProfileClick() }
+        )
+    }
+}
+
+/** Padding górny ekranów z dolną nawigacją. */
+val screenPaddingTop = 52.dp
+
+/** Padding dolny ekranów z dolną nawigacją. */
+val screenPaddingBottom = 20.dp
+
+/** Padding poziomy ekranów z dolną nawigacją. */
+val screenPaddingHorizontal = 26.dp
+
+@Composable
+fun NavIcon(icon: ImageVector, isActive: Boolean, onClick: () -> Unit = {}) {
+    val tint by animateColorAsState(
+        targetValue = if (isActive) MaterialTheme.colorScheme.onBackground
+        else MaterialTheme.colorScheme.secondary,
+        animationSpec = tween(220),
+        label = "navTint"
+    )
+    val dotScale by animateFloatAsState(
+        targetValue = if (isActive) 1f else 0f,
+        animationSpec = tween(220),
+        label = "navDot"
+    )
+    val interactionSource = remember { MutableInteractionSource() }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = Modifier.clickable(
+            interactionSource = interactionSource,
+            indication = null,
+            onClick = onClick
+        )
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(22.dp)
+        )
+        Box(
+            modifier = Modifier
+                .size(4.dp)
+                .graphicsLayer {
+                    scaleX = dotScale
+                    scaleY = dotScale
+                }
+                .background(
+                    color = if (dotScale > 0f) MaterialTheme.colorScheme.onBackground
+                    else Color.Transparent,
+                    shape = CircleShape
+                )
+        )
+    }
+}

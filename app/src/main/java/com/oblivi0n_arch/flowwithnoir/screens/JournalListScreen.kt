@@ -13,10 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -114,7 +111,8 @@ fun JournalListScreen(
                     scope.launch { pullOffset.animateTo(0f, tween(200)) }
                 })
             }
-            .padding(horizontal = 26.dp, vertical = 52.dp)
+            .padding(horizontal = screenPaddingHorizontal)
+            .padding(top = screenPaddingTop, bottom = screenPaddingBottom)
     ) {
         Text(
             text = "Dziennik",
@@ -184,16 +182,11 @@ fun JournalListScreen(
             }
         }
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp, bottom = 8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            NavIcon(icon = Icons.Filled.SelfImprovement, isActive = false, onClick = onHomeClick)
-            NavIcon(icon = Icons.Filled.MenuBook, isActive = true)
-            NavIcon(icon = Icons.Filled.AccountCircle, isActive = false, onClick = onProfileClick)
-        }
+        BottomNavBar(
+            selected = NavTab.JOURNAL,
+            onSessionsClick = onHomeClick,
+            onProfileClick = onProfileClick
+        )
     }
 }
 
