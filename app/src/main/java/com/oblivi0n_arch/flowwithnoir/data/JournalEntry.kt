@@ -49,11 +49,20 @@ data class JournalEntry(
     val isCompleted: Boolean,
     val feeling: Feeling?,
     val note: String,
-    @ColumnInfo(defaultValue = "") val tags: List<JournalTag> = emptyList()
+    @ColumnInfo(defaultValue = "") val tags: List<JournalTag> = emptyList(),
+    @ColumnInfo(defaultValue = "") val title: String = ""
 ) {
     val isJournalEntry: Boolean
-        get() = feeling != null || note.isNotBlank() || tags.isNotEmpty()
+        get() = feeling != null || note.isNotBlank() || tags.isNotEmpty() || title.isNotBlank()
 
     val isSession: Boolean
         get() = plannedDurationSeconds > 0
+
+    val displayTitle: String
+        get() = when {
+            title.isNotBlank() -> title
+            isSession -> sessionName
+            note.isNotBlank() -> note.lineSequence().first().take(60)
+            else -> "Wpis"
+        }
 }

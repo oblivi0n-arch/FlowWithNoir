@@ -494,9 +494,11 @@ private fun JournalEntryCard(entry: JournalEntry, onClick: () -> Unit) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = entry.sessionName,
+                    text = entry.displayTitle,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = MaterialTheme.colorScheme.onBackground,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = entryMeta(entry),
@@ -542,12 +544,12 @@ private fun JournalEntryCard(entry: JournalEntry, onClick: () -> Unit) {
 
 private fun entryMeta(entry: JournalEntry): String {
     val time = SimpleDateFormat("HH:mm", Locale("pl")).format(Date(entry.timestampMillis))
-    return if (entry.isSession) {
-        val minutes = entry.actualDurationSeconds / 60
-        "$time · $minutes min"
-    } else {
-        time
-    }
+    if (!entry.isSession) return time
+
+    val parts = mutableListOf(time)
+    if (entry.title.isNotBlank()) parts += entry.sessionName
+    parts += "${entry.actualDurationSeconds / 60} min"
+    return parts.joinToString(" · ")
 }
 
 @Preview(showBackground = true)

@@ -27,7 +27,8 @@ class JournalRepository(private val dao: JournalDao) {
         isCompleted: Boolean,
         feeling: Feeling? = null,
         note: String = "",
-        tags: List<JournalTag> = emptyList()
+        tags: List<JournalTag> = emptyList(),
+        title: String = ""
     ) {
         dao.insert(
             JournalEntry(
@@ -38,18 +39,20 @@ class JournalRepository(private val dao: JournalDao) {
                 isCompleted = isCompleted,
                 feeling = feeling,
                 note = note,
-                tags = tags
+                tags = tags,
+                title = title
             )
         )
     }
 
     suspend fun updateEntry(
         entry: JournalEntry,
+        title: String,
         feeling: Feeling?,
         note: String,
         tags: List<JournalTag>
     ) {
-        dao.update(entry.copy(feeling = feeling, note = note, tags = tags))
+        dao.update(entry.copy(title = title, feeling = feeling, note = note, tags = tags))
     }
 
     suspend fun deleteEntry(entry: JournalEntry) {

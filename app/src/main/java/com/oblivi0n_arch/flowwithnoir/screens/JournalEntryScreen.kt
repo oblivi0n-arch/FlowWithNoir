@@ -13,6 +13,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,16 +24,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.oblivi0n_arch.flowwithnoir.data.Feeling
 import com.oblivi0n_arch.flowwithnoir.data.JournalEntry
 import com.oblivi0n_arch.flowwithnoir.data.JournalTag
 import com.oblivi0n_arch.flowwithnoir.ui.theme.FlowWithNoirTheme
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -62,14 +62,41 @@ fun JournalEntryScreen(
             .padding(horizontal = screenPaddingHorizontal)
             .padding(top = screenPaddingTop, bottom = screenPaddingBottom)
     ) {
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-            contentDescription = "Wstecz",
-            tint = MaterialTheme.colorScheme.secondary,
-            modifier = Modifier
-                .size(20.dp)
-                .clickable(onClick = onBack)
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Wstecz",
+                tint = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier
+                    .size(20.dp)
+                    .clickable(onClick = onBack)
+            )
+
+            if (entry != null) {
+                Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                    Icon(
+                        imageVector = Icons.Filled.Edit,
+                        contentDescription = "Edytuj",
+                        tint = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier
+                            .size(18.dp)
+                            .clickable(onClick = onEdit)
+                    )
+                    Icon(
+                        imageVector = Icons.Filled.DeleteOutline,
+                        contentDescription = "Usuń",
+                        tint = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier
+                            .size(18.dp)
+                            .clickable { showDeleteDialog = true }
+                    )
+                }
+            }
+        }
 
         if (entry == null) {
             Box(
@@ -89,47 +116,57 @@ fun JournalEntryScreen(
             return@Column
         }
 
+        Spacer(modifier = Modifier.height(22.dp))
+
+        Text(
+            text = fullDate(entry.timestampMillis).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.secondary
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = entry.displayTitle,
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+
+        if (entry.isSession) {
+            Spacer(modifier = Modifier.height(12.dp))
+            SessionPill(entry)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
+                .padding(vertical = 18.dp)
         ) {
-            Spacer(modifier = Modifier.height(14.dp))
-
             Text(
-                text = fullDate(entry.timestampMillis).uppercase(),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.secondary
+                text = entry.note.ifBlank { "Bez notatki" },
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (entry.note.isBlank()) MaterialTheme.colorScheme.secondary
+                else MaterialTheme.colorScheme.onBackground
             )
+        }
 
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Text(
-                text = entry.sessionName,
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            if (entry.isSession) {
-                Spacer(modifier = Modifier.height(18.dp))
-                SessionSummary(entry)
-            }
+        if (entry.feeling != null || entry.tags.isNotEmpty()) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+            Spacer(modifier = Modifier.height(16.dp))
 
             entry.feeling?.let { feeling ->
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    text = "NASTRÓJ",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-                Spacer(modifier = Modifier.height(10.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(38.dp)
+                            .size(28.dp)
                             .border(1.dp, MaterialTheme.colorScheme.onBackground, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
@@ -137,7 +174,7 @@ fun JournalEntryScreen(
                             imageVector = feelingIcon(feeling),
                             contentDescription = feeling.label,
                             tint = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(14.dp)
                         )
                     }
                     Text(
@@ -149,50 +186,11 @@ fun JournalEntryScreen(
             }
 
             if (entry.tags.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    text = "CZEGO DOTYCZY",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-                Spacer(modifier = Modifier.height(10.dp))
+                if (entry.feeling != null) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
                 TagRow(tags = entry.tags)
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "NOTATKA",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.secondary
-            )
-            Spacer(modifier = Modifier.height(10.dp))
-            Text(
-                text = entry.note.ifBlank { "Bez notatki" },
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (entry.note.isBlank()) MaterialTheme.colorScheme.secondary
-                else MaterialTheme.colorScheme.onBackground
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            ActionButton(
-                icon = Icons.Filled.Edit,
-                label = "Edytuj",
-                onClick = onEdit,
-                modifier = Modifier.weight(1f)
-            )
-            ActionButton(
-                icon = Icons.Filled.DeleteOutline,
-                label = "Usuń",
-                onClick = { showDeleteDialog = true },
-                modifier = Modifier.weight(1f)
-            )
         }
     }
 
@@ -228,73 +226,24 @@ private fun TagRow(tags: List<JournalTag>) {
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         tags.forEach { tag ->
-            TagChip(tag = tag, isSelected = false)
+            TagChip(tag = tag, isSelected = false, isCompact = true)
         }
     }
 }
 
 @Composable
-private fun SessionSummary(entry: JournalEntry) {
+private fun SessionPill(entry: JournalEntry) {
+    val status = if (entry.isCompleted) "ukończona" else "przerwana"
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(14.dp))
-            .padding(vertical = 12.dp, horizontal = 16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Column {
-            Text(
-                text = "Czas",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.secondary
-            )
-            Text(
-                text = formatDuration(entry.actualDurationSeconds),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-        }
-        Column(horizontalAlignment = Alignment.End) {
-            Text(
-                text = "Status",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.secondary
-            )
-            Text(
-                text = if (entry.isCompleted) "Ukończona" else "Przerwana",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-        }
-    }
-}
-
-@Composable
-private fun ActionButton(
-    icon: ImageVector,
-    label: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
             .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(999.dp))
-            .clickable(onClick = onClick)
-            .padding(vertical = 12.dp),
-        horizontalArrangement = Arrangement.Center,
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.secondary,
-            modifier = Modifier.size(16.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground
+            text = "${entry.sessionName} · ${formatDuration(entry.actualDurationSeconds)} · $status",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.secondary
         )
     }
 }
@@ -321,8 +270,9 @@ fun JournalEntryScreenPreview() {
                 timestampMillis = System.currentTimeMillis(),
                 isCompleted = true,
                 feeling = Feeling.CALM,
-                note = "Spokojna sesja, myśli odpuściły po trzeciej minucie.",
-                tags = listOf(JournalTag.WORK, JournalTag.REST)
+                note = "Trzecia minuta i myśli wreszcie odpuściły. Barki zeszły w dół same z siebie.",
+                tags = listOf(JournalTag.WORK, JournalTag.REST),
+                title = "Barki wreszcie zeszły"
             ),
             onBack = {},
             onEdit = {},

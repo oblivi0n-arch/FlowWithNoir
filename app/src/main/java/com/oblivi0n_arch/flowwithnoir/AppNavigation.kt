@@ -267,6 +267,7 @@ fun AppNavigation() {
 
             JournalScreen(
                 mode = JournalMode.AFTER_SESSION,
+                sessionLabel = name,
                 onSkip = {
                     scope.launch {
                         journalRepository.logSession(
@@ -280,7 +281,7 @@ fun AppNavigation() {
                         }
                     }
                 },
-                onSave = { feeling, note, tags ->
+                onSave = { title, feeling, note, tags ->
                     scope.launch {
                         journalRepository.logSession(
                             sessionName = name,
@@ -289,7 +290,8 @@ fun AppNavigation() {
                             isCompleted = true,
                             feeling = feeling,
                             note = note,
-                            tags = tags
+                            tags = tags,
+                            title = title
                         )
                         navController.navigate(Routes.HOME) {
                             popUpTo(Routes.HOME) { inclusive = true }
@@ -305,7 +307,7 @@ fun AppNavigation() {
                 onSkip = {
                     navController.popBackStack()
                 },
-                onSave = { feeling, note, tags ->
+                onSave = { title, feeling, note, tags ->
                     scope.launch {
                         journalRepository.logSession(
                             sessionName = "Wpis dziennika",
@@ -314,7 +316,8 @@ fun AppNavigation() {
                             isCompleted = true,
                             feeling = feeling,
                             note = note,
-                            tags = tags
+                            tags = tags,
+                            title = title
                         )
                         navController.popBackStack()
                     }
@@ -354,13 +357,16 @@ fun AppNavigation() {
             entry?.let { current ->
                 JournalScreen(
                     mode = JournalMode.EDIT,
+                    sessionLabel = current.sessionName,
+                    timestampMillis = current.timestampMillis,
+                    initialTitle = current.title,
                     initialFeeling = current.feeling,
                     initialNote = current.note,
                     initialTags = current.tags,
                     onSkip = { navController.popBackStack() },
-                    onSave = { feeling, note, tags ->
+                    onSave = { title, feeling, note, tags ->
                         scope.launch {
-                            journalRepository.updateEntry(current, feeling, note, tags)
+                            journalRepository.updateEntry(current, title, feeling, note, tags)
                             navController.popBackStack()
                         }
                     }
