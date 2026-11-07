@@ -1,8 +1,20 @@
 # Flow with Noir
 
+> **Status: finished.** The app works in full; it's no longer developed.
+
 A breathing and journaling app for Android. Two colours, no accounts, no network.
 
 > **The app interface is in Polish.** The code, commit history and this document are in English.
+
+## Why it exists
+
+I made it for a friend, my first app built for another person rather than for myself. It's also my first mobile app. I don't write Kotlin: I designed the app and made the decisions, and the code was written entirely by Claude.
+
+## What I learned
+
+- **Don't trust the emulator.** In Android Studio the emulator is practically the default, and everything worked there. When I borrowed a real Android phone to debug, more bugs showed up that the emulator never showed. Since then: before a release, always test on a real device, however awkward it is to get one.
+- **Releasing and signing an app.** My first signed release build, and the rule that came with it: the signing key never goes into the repository (see [Release builds](#release-builds)).
+- **Mobile isn't desktop.** On macOS, Apple's frameworks come with the system and every file in a module sees the others. On Android even the basics (Room, Navigation, DataStore) are dependencies added by hand, and each file imports what it uses.
 
 ## What it does
 
@@ -62,5 +74,3 @@ The launcher icon is original work and falls under this project's licence.
 Released under the **GNU General Public License v3.0**. The full text is in [LICENSE](LICENSE).
 
 In short: you may use, study, modify and share this code, including commercially. If you distribute a modified version, it has to stay open under the same licence. Nobody can take this, close the source and ship it as a proprietary product.
-
-Built by [@oblivi0n-arch](https://github.com/oblivi0n-arch).
